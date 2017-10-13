@@ -11,8 +11,8 @@ import dynet as dy
 import numpy as np
 
 # format of files: each line is "word1 word2 ..." aligned line-by-line
-train_src_file = "../data/train_lines"
-dev_src_file = "../data/dev_lines"
+train_src_file = "../data/Project_Data/train_lines"
+dev_src_file = "../data/Project_Data/dev_lines"
 
 w2i = defaultdict(lambda: len(w2i))
 
@@ -106,12 +106,16 @@ def calc_scores(sent):
     #return W_sm_exp * dy.concatenate([contextReps, questionReps]) + b_sm_exp
 
 # Calculate loss for one mini-batch
-def calc_start_loss(sents):
+def getRepresentation(sents):
     dy.renew_cg()
     # Transduce all batch elements with an LSTM
     sent_reps = [(LSTM_context.transduce([LOOKUP_SRC[x] for x in sent[0]])[-1],
                   LSTM_question.transduce([LOOKUP_SRC[z] for z in sent[1]])[-1],
-                  LSTM_answer.transduce([LOOKUP_SRC[y] for y in sent[2]])[-1]) for sent  in sents]
+                  LSTM_answer.transduce([LOOKUP_SRC[y] for y in sent[2]])[-1]) for sent in sents]
+    return sent_reps
+
+def calc_start_loss(sent_reps, sents):
+
 
     W_sm_exp_start = dy.parameter(W_sm_start)
     b_sm_exp_start = dy.parameter(b_sm_start)
@@ -123,12 +127,7 @@ def calc_start_loss(sents):
      #dy.sum_batches(dy.esum(losses))
     return dy.esum(start_loss)
 
-def calc_end_loss(sents):
-    dy.renew_cg()
-    # Transduce all batch elements with an LSTM
-    sent_reps = [(LSTM_context.transduce([LOOKUP_SRC[x] for x in sent[0]])[-1],
-                  LSTM_question.transduce([LOOKUP_SRC[z] for z in sent[1]])[-1],
-                  LSTM_answer.transduce([LOOKUP_SRC[y] for y in sent[2]])[-1]) for sent  in sents]
+def calc_end_loss(sent_reps, sents):
 
     W_sm_exp_end = dy.parameter(W_sm_end)
     b_sm_exp_end = dy.parameter(b_sm_end)
@@ -172,7 +171,7 @@ def calc_end_loss(sents):
 
 start = time.time()
 train_mbs = all_time = dev_time = all_tagged = this_sents = this_loss = 0
-for ITER in range(2):
+for ITER in range(1,101):
     train_loss = 0
     random.shuffle(train)
     for sid in range(0, len(train), BATCH_SIZE):
@@ -183,40 +182,46 @@ for ITER in range(2):
             #print("loss/sent=%.4f, sent/sec=%.4f" % (this_loss / this_sents, (train_mbs * BATCH_SIZE) / (time.time() - start - dev_time)), file=sys.stderr)
             this_loss = this_sents = 0
         # train on the minibatch
-        loss_exp = calc_start_loss(train[sid:sid+BATCH_SIZE])
-        this_loss += loss_exp.scalar_value()
-        train_loss += loss_exp.scalar_value()
-        loss_exp = calc_end_loss(train[sid:sid + BATCH_SIZE])
-        this_loss += loss_exp.scalar_value()
-        train_loss += loss_exp.scalar_value()
+        sents = train[sid:sid+BATCH_SIZE]
+        reps = getRepresentation(sents)
+        loss_Start = calc_start_loss(reps, sents)
+        this_loss += loss_Start.scalar_value()/float(2)
+        train_loss += loss_Start.scalar_value()/float(2)
+        loss_Start.backward()
+        trainer.update()
+
+        loss_End = calc_end_loss(reps, sents)
+        this_loss += loss_End.scalar_value()/float(2)
+        train_loss += loss_End.scalar_value()/float(2)
         this_sents += BATCH_SIZE
-        loss_exp.backward()
+        loss_End.backward()
         trainer.update()
         print('Train ' + str(sid) + ' / ' + str(len(train)) + ' ,Iter ' + str(ITER))
-    #print("iter %r: train loss/sent=%.4f, time=%.2fs" % (ITER, train_loss / len(train), time.time() - start))
-    sentIndex = 0
-    test_correct = 0.0
-    for sent in dev:
-        scores = calc_scores(sent)
-        scores_start = scores[0].npvalue()
-        scores_end = scores[1].npvalue()
+    print("iter %r: train loss/sent=%.4f, time=%.2fs" % (ITER, train_loss / len(train), time.time() - start))
+    if ITER % 50 == 0:
+        sentIndex = 0
+        test_correct = 0.0
+        for sent in dev:
+            scores = calc_scores(sent)
+            scores_start = scores[0].npvalue()
+            scores_end = scores[1].npvalue()
 
-        predict_start = 0
-        predict_end = 0
-        max_score = 0
-        for i in range(len(sent[3])+1):
-            for j in range(i+1):
-                if scores_start[i] * scores_end[j] > max_score:
-                    max_score = scores_start[i] * scores_end[j]
-                    predict_start = i
-                    predict_end = j
-        #print (predict_start)
-        #print (predict_end)
-        if predict_start == sent[6]:
-            test_correct += 1
-        sentIndex +=1
-        if sentIndex % 500 == 0:
-            print('Dev ' + str(sentIndex) + ' / ' + str(len(dev)) + ' ,Iter ' + str(ITER))
-    print("iter %r: test acc=%.4f" % (ITER, test_correct / len(dev)))
-    end = time.time()
-    print("run time %.4f" % end - start)
+            predict_start = 0
+            predict_end = 0
+            max_score = 0
+            for i in range(len(sent[3])+1):
+                for j in range(i+1):
+                    if scores_start[i] * scores_end[j] > max_score:
+                        max_score = scores_start[i] * scores_end[j]
+                        predict_start = i
+                        predict_end = j
+            #print (predict_start)
+            #print (predict_end)
+            if predict_start == sent[6]:
+                test_correct += 1
+            sentIndex +=1
+            if sentIndex % 500 == 0:
+                print('Dev ' + str(sentIndex) + ' / ' + str(len(dev)) + ' ,Iter ' + str(ITER))
+        print("iter %r: test acc=%.4f" % (ITER, test_correct / len(dev)))
+        end = time.time()
+        print("run time = " + str(end - start))
