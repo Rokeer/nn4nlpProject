@@ -200,9 +200,18 @@ for ITER in range(2):
         scores = calc_scores(sent)
         scores_start = scores[0].npvalue()
         scores_end = scores[1].npvalue()
-        predict_start = np.argmax(scores_start)
-        print (predict_start)
-        print (np.argmax(scores_end))
+
+        predict_start = 0
+        predict_end = 0
+        max_score = 0
+        for i in range(len(sent[3])+1):
+            for j in range(i+1):
+                if scores_start[i] * scores_end[j] > max_score:
+                    max_score = scores_start[i] * scores_end[j]
+                    predict_start = i
+                    predict_end = j
+        #print (predict_start)
+        #print (predict_end)
         if predict_start == sent[6]:
             test_correct += 1
         sentIndex +=1
