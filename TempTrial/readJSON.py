@@ -1,9 +1,9 @@
 import json
 from pprint import pprint
 
-with open('../data/Project_Data/train-v1.1.json') as data_file:
+with open('../train-v1.1.json') as data_file:
     data = json.load(data_file)
-writeDataOnLines = open('../data/Project_Data/train_lines','w')
+writeDataOnLines = open('../train_lines','w')
 oldLine = ''
 for topic in data["data"]:
     for paragraph in topic["paragraphs"]:
