@@ -11,8 +11,8 @@ import dynet as dy
 import numpy as np
 
 # format of files: each line is "word1 word2 ..." aligned line-by-line
-train_src_file = "../data/Project_Data/train_lines"
-dev_src_file = "../data/Project_Data/dev_lines"
+train_src_file = "../data/train_lines"
+dev_src_file = "../data/dev_lines"
 
 w2i = defaultdict(lambda: len(w2i))
 
@@ -50,7 +50,7 @@ trainer = dy.AdamTrainer(model)
 # Model parameters
 EMBED_SIZE = 64
 HIDDEN_SIZE = 128
-BATCH_SIZE = 16
+BATCH_SIZE = 512
 
 # Lookup parameters for word embeddings
 LOOKUP_SRC = model.add_lookup_parameters((nwords_src, EMBED_SIZE))
@@ -174,3 +174,5 @@ for ITER in range(2):
         if sentIndex % 10 == 0:
             print('Dev ' + str(sentIndex) + ' / ' + str(len(dev)) + ' ,Iter ' + str(ITER))
     print("iter %r: test acc=%.4f" % (ITER, test_correct / len(dev)))
+    end = time.time()
+    print("run time %r" % end - start)
