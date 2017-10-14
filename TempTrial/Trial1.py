@@ -42,7 +42,7 @@ def read_train(fname_src):
             sent_answers = [w2i[x] for x in answer.strip().split()]
             sent_question = [w2i[x] for x in question.strip().split()]
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end)
-            if lineindex >= 2000:
+            if lineindex >= 1000:
                 break
 
 def read_dev(fname_src):
@@ -80,8 +80,8 @@ def read_dev(fname_src):
                 answer = line_src.split('\t')[3]
                 answers.append(answer)
                 sent_answers.append([w2i[x] for x in answer.strip().split()])
-            if lineindex >= 50:
-                break
+            #if lineindex >= 50:
+            #    break
 
 
 # Read the data
@@ -330,6 +330,7 @@ for ITER in range(1,201):
             trainer.update()
         print('Train ' + str(sid) + ' / ' + str(len(train)) + ' ,Iter ' + str(ITER))
     print("iter %r: train loss/sent=%.4f, time=%.2fs" % (ITER, train_loss / len(train), time.time() - start_itr))
+    
     if ITER % 10 == 0:
         #model.save('a.model')
         model.save('../models/' + str(ITER) + '.model')
@@ -367,6 +368,40 @@ for ITER in range(1,201):
             #    print('Dev ' + str(sentIndex) + ' / ' + str(len(dev)) + ' ,Iter ' + str(ITER))
         result = evaluate(qas)
         print("iter %r: test total=%r, EM=%.4f, F1=%.4f time=%.2fs" % (ITER, len(dev), result[0], result[1], time.time() - start_itr))
+    else:
+        start_itr = time.time()
+        sentIndex = 0
+        test_correct = 0.0
+        qas = []
+        for sent in dev[1:50]:
+            scores = calc_scores(sent)
+            scores_start = scores[0].npvalue()
+            scores_end = scores[1].npvalue()
+
+            predict_start = 0
+            predict_end = 1
+            max_score = 0
+            for i in range(len(sent[3])):
+                for j in range(i+1, len(sent[3])+1):
+                    if scores_start[i] + scores_end[j] > max_score:
+                        max_score = scores_start[i] + scores_end[j]
+                        predict_start = i
+                        predict_end = j
+            #print (predict_start)
+            #print (predict_end)
+            answer = ''
+            for i in range(predict_start, predict_end):
+                answer = answer + str(sent[3][i])
+            qas.append([sent[5],answer])
+            #print (answer)
+            
+            #if predict_start == sent[6]:
+            #    test_correct += 1
+            #sentIndex +=1
+            #if sentIndex % 500 == 0:
+            #    print('Dev ' + str(sentIndex) + ' / ' + str(len(dev)) + ' ,Iter ' + str(ITER))
+        result = evaluate(qas)
+        print("iter %r: test total=50, EM=%.4f, F1=%.4f time=%.2fs" % (ITER, result[0], result[1], time.time() - start_itr))
 end = time.time()
 print("run time = " + str(end - start))
         
