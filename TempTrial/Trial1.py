@@ -42,8 +42,8 @@ def read_train(fname_src):
             sent_answers = [w2i[x] for x in answer.strip().split()]
             sent_question = [w2i[x] for x in question.strip().split()]
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end)
-            if lineindex >= 1000:
-                break
+            #if lineindex >= 2000:
+            #    break
 
 def read_dev(fname_src):
     global max_length
@@ -201,8 +201,11 @@ def calc_scores(sent):
     b_sm_exp_start = dy.parameter(b_sm_start)
     W_sm_exp_end = dy.parameter(W_sm_end)
     b_sm_exp_end = dy.parameter(b_sm_end)
-    return [dy.affine_transform([b_sm_exp_start, W_sm_exp_start, dy.concatenate([contextReps, questionReps])]),
-            dy.affine_transform([b_sm_exp_end, W_sm_exp_end, dy.concatenate([contextReps, questionReps])])]
+
+    loss_start = dy.affine_transform([b_sm_exp_start, W_sm_exp_start, dy.concatenate([contextReps, questionReps])])
+    loss_end = dy.affine_transform([b_sm_exp_end, W_sm_exp_end, dy.concatenate([contextReps, questionReps])])
+
+    return [dy.log_softmax(loss_start), dy.log_softmax(loss_end)]
     #return W_sm_exp * dy.concatenate([contextReps, questionReps]) + b_sm_exp
 
 # Calculate loss for one mini-batch
@@ -301,10 +304,13 @@ for ITER in range(1,201):
     for sid in range(0, len(train), BATCH_SIZE):
         my_size = min(BATCH_SIZE, len(train)-sid)
         train_mbs += 1
-        if train_mbs % int(1000/BATCH_SIZE) == 0:
+        if train_mbs % int(10240/BATCH_SIZE) == 0:
             trainer.status()
+            print('Train ' + str(sid) + ' / ' + str(len(train)) + ' ,Iter ' + str(ITER) + ', loss/sent=' + str(
+                this_loss / this_sents))
             #print("loss/sent=%.4f, sent/sec=%.4f" % (this_loss / this_sents, (train_mbs * BATCH_SIZE) / (time.time() - start - dev_time)), file=sys.stderr)
             this_loss = this_sents = 0
+
         # train on the minibatch
         sents = train[sid:sid+BATCH_SIZE]
         reps = getRepresentation(sents)
@@ -313,6 +319,7 @@ for ITER in range(1,201):
             loss_exp = calc_loss(reps, sents)
             this_loss += loss_exp.scalar_value()
             train_loss += loss_exp.scalar_value()
+            this_sents += BATCH_SIZE
             loss_exp.backward()
             trainer.update()
         else:
@@ -328,13 +335,13 @@ for ITER in range(1,201):
             this_sents += BATCH_SIZE
             loss_End.backward()
             trainer.update()
-        print('Train ' + str(sid) + ' / ' + str(len(train)) + ' ,Iter ' + str(ITER))
+
     print("iter %r: train loss/sent=%.4f, time=%.2fs" % (ITER, train_loss / len(train), time.time() - start_itr))
-    
+
+
+
     if ITER % 10 == 0:
         #model.save('a.model')
-        model.save('../models/' + str(ITER) + '.model')
-    if ITER % 50 == 0:
         start_itr = time.time()
         sentIndex = 0
         test_correct = 0.0
@@ -346,62 +353,30 @@ for ITER in range(1,201):
 
             predict_start = 0
             predict_end = 1
-            max_score = 0
+            max_score = scores_start[0] + scores_end[1]
             for i in range(len(sent[3])):
-                for j in range(i+1, len(sent[3])+1):
+                for j in range(i + 1, len(sent[3]) + 1):
                     if scores_start[i] + scores_end[j] > max_score:
                         max_score = scores_start[i] + scores_end[j]
                         predict_start = i
                         predict_end = j
-            #print (predict_start)
-            #print (predict_end)
+            # print (predict_start)
+            # print (predict_end)
             answer = ''
             for i in range(predict_start, predict_end):
                 answer = answer + str(sent[3][i])
-            qas.append([sent[5],answer])
-            #print (answer)
-            
-            #if predict_start == sent[6]:
-            #    test_correct += 1
-            #sentIndex +=1
-            #if sentIndex % 500 == 0:
-            #    print('Dev ' + str(sentIndex) + ' / ' + str(len(dev)) + ' ,Iter ' + str(ITER))
-        result = evaluate(qas)
-        print("iter %r: test total=%r, EM=%.4f, F1=%.4f time=%.2fs" % (ITER, len(dev), result[0], result[1], time.time() - start_itr))
-    else:
-        start_itr = time.time()
-        sentIndex = 0
-        test_correct = 0.0
-        qas = []
-        for sent in dev[1:50]:
-            scores = calc_scores(sent)
-            scores_start = scores[0].npvalue()
-            scores_end = scores[1].npvalue()
+            qas.append([sent[5], answer])
+            # print (answer)
 
-            predict_start = 0
-            predict_end = 1
-            max_score = 0
-            for i in range(len(sent[3])):
-                for j in range(i+1, len(sent[3])+1):
-                    if scores_start[i] + scores_end[j] > max_score:
-                        max_score = scores_start[i] + scores_end[j]
-                        predict_start = i
-                        predict_end = j
-            #print (predict_start)
-            #print (predict_end)
-            answer = ''
-            for i in range(predict_start, predict_end):
-                answer = answer + str(sent[3][i])
-            qas.append([sent[5],answer])
-            #print (answer)
-            
-            #if predict_start == sent[6]:
+            # if predict_start == sent[6]:
             #    test_correct += 1
-            #sentIndex +=1
-            #if sentIndex % 500 == 0:
+            # sentIndex +=1
+            # if sentIndex % 500 == 0:
             #    print('Dev ' + str(sentIndex) + ' / ' + str(len(dev)) + ' ,Iter ' + str(ITER))
         result = evaluate(qas)
-        print("iter %r: test total=50, EM=%.4f, F1=%.4f time=%.2fs" % (ITER, result[0], result[1], time.time() - start_itr))
+        print("iter %r: test total=%r, EM=%.4f, F1=%.4f time=%.2fs" % (
+            ITER, len(dev), result[0], result[1], time.time() - start_itr))
+        model.save('../models/' + str(ITER) + '.model')
 end = time.time()
 print("run time = " + str(end - start))
         
