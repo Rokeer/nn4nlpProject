@@ -84,7 +84,7 @@ def read_dev(fname_src):
                 answer = line_src.split('\t')[3]
                 answers.append(answer)
                 sent_answers.append([w2i[x] for x in answer.strip().split()])
-            #if lineindex >= 50:
+            #if lineindex >= 2000:
             #    break
 
 
@@ -103,7 +103,7 @@ trainer = dy.AdamTrainer(model)
 EMBED_SIZE = 64
 HIDDEN_SIZE = 128
 BATCH_SIZE = 512
-TEST_BATCH_SIZE = 512
+TEST_BATCH_SIZE = 0
 
 # Lookup parameters for word embeddings
 LOOKUP_SRC = model.add_lookup_parameters((nwords_src, EMBED_SIZE))
@@ -332,30 +332,27 @@ for ITER in range(1,201):
         test_correct = 0.0
         qas = []
         if TEST_BATCH_SIZE > 0:
-            for sid in range(0, len(train), TEST_BATCH_SIZE):
-                sents = train[sid:sid+TEST_BATCH_SIZE]
+            for sid in range(0, len(dev), TEST_BATCH_SIZE):
+                sents = dev[sid:sid+TEST_BATCH_SIZE]
                 scores = calc_scores_batch(sents)
-                
                 for sent, score in zip(sents, scores):
-                    
-                    for ss, se in score:
-                        scores_start = ss.npvalue()
-                        scores_end = se.npvalue()
-                        predict_start = 0
-                        predict_end = 1
-                        max_score = scores_start[0] + scores_end[1]
-                        for i in range(len(sent[3])):
-                            for j in range(i + 1, len(sent[3]) + 1):
-                                if scores_start[i] + scores_end[j] > max_score:
-                                    max_score = scores_start[i] + scores_end[j]
-                                    predict_start = i
-                                    predict_end = j
-                        answer = ''
-                        for i in range(predict_start, predict_end):
-                            answer = answer + str(sent[3][i])
-                            qas.append([sent[5], answer])
+                    scores_start = score[0].npvalue()
+                    scores_end = score[1].npvalue()
+                    predict_start = 0
+                    predict_end = 1
+                    max_score = scores_start[0] + scores_end[1]
+                    for i in range(len(sent[3])):
+                        for j in range(i + 1, len(sent[3]) + 1):
+                            if scores_start[i] + scores_end[j] > max_score:
+                                max_score = scores_start[i] + scores_end[j]
+                                predict_start = i
+                                predict_end = j
+                    answer = ''
+                    for i in range(predict_start, predict_end):
+                        answer = answer + str(sent[3][i])
+                    qas.append([sent[5], answer])
                 
-        else:    
+        else:
             for sent in dev:
                 scores = calc_scores(sent)
                 scores_start = scores[0].npvalue()
