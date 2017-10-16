@@ -6,8 +6,11 @@ Task:
 Question Answering over SQuAD (Stanford question answering Dataset)
 
 Group members:
+
 Tazin Afrin
+
 Haoran Zhang
+
 Ahmed Magooda
 
 
