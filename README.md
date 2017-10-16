@@ -14,7 +14,10 @@ Haoran Zhang
 Ahmed Magooda
 
 
+----------------------------------------------------
 How to run:
+
+-----------
 
 Run the file "./Code/Assignment_1_Model.py"
 
