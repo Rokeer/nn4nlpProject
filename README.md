@@ -5,7 +5,7 @@ This is the repository for NN4NLP Fall-2017 class project:
 Task:
 Question Answering over SQuAD (Stanford question answering Dataset)
 
-----------------------------------
+-----------------------------------
 Group members:
 -----------------------------------
 
@@ -16,10 +16,9 @@ Haoran Zhang
 Ahmed Magooda
 
 
-----------------------------------------------------
+-----------------------------------
 How to run:
-
------------
+-----------------------------------
 
 Run the file "./Code/Assignment_1_Model.py"
 
