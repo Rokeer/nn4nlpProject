@@ -23,14 +23,3 @@ How to run:
 Run the code "python ./Code/Assignment_1_Model.py" 
 
 This file should do training using the training set for 200 epochs and validating using the devset every 10 epochs out of the 200. The code also saves a model every 10 iterations
-
-Requirements:
-
-  Input Files: /data/train_lines
-               and /data/dev_lines
-               
-  How to generate the input files: "python ./Code/readJSON.py"
-  
-  The readJSON.py files takes direct raw data from the SQuAD dataset and outputs a formatted file to be used in the learning     algorithm.
-
-
