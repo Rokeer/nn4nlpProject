@@ -114,11 +114,11 @@ LSTM_answer = dy.BiRNNBuilder(1, EMBED_SIZE, HIDDEN_SIZE, model, dy.GRUBuilder)
 LSTM_question = dy.BiRNNBuilder(1, EMBED_SIZE, HIDDEN_SIZE, model, dy.GRUBuilder)
 
 # Word-level softmax
-W_sm_start = model.add_parameters((max_length+1, 2*HIDDEN_SIZE))
-b_sm_start = model.add_parameters(max_length+1)
+W_sm_start = model.add_parameters((nwords_src, 2*HIDDEN_SIZE))
+b_sm_start = model.add_parameters(nwords_src)
 
-W_sm_end = model.add_parameters((max_length+1, 2*HIDDEN_SIZE))
-b_sm_end = model.add_parameters(max_length+1)
+W_sm_end = model.add_parameters((nwords_src, 2*HIDDEN_SIZE))
+b_sm_end = model.add_parameters(nwords_src)
 
 
 def normalize_answer(s):
@@ -254,27 +254,24 @@ def calc_loss(sent_reps, sents):
     return dy.esum(start_loss + end_loss)
 
 def calc_start_loss(sent_reps, sents):
-
-
     W_sm_exp_start = dy.parameter(W_sm_start)
     b_sm_exp_start = dy.parameter(b_sm_start)
 
     loss_start = [dy.affine_transform([b_sm_exp_start, W_sm_exp_start, dy.concatenate([x[0], x[1]])]) for x in sent_reps]
 
     #loss = W_sm_exp * mtxCombined + b_sm_exp
-    start_loss = [dy.pickneglogsoftmax(x, y[6]) for x,y in zip(loss_start,sents)]
-    #dy.sum_batches(dy.esum(losses))
+    start_loss = [dy.pickneglogsoftmax(x, y[2][0]) for x,y in zip(loss_start,sents)]
+     #dy.sum_batches(dy.esum(losses))
     return dy.esum(start_loss)
 
 def calc_end_loss(sent_reps, sents):
-
     W_sm_exp_end = dy.parameter(W_sm_end)
     b_sm_exp_end = dy.parameter(b_sm_end)
 
     loss_end = [dy.affine_transform([b_sm_exp_end, W_sm_exp_end, dy.concatenate([x[0], x[1]])]) for x in sent_reps]
 
     #loss = W_sm_exp * mtxCombined + b_sm_exp
-    end_loss = [dy.pickneglogsoftmax(x, y[7]) for x, y in zip(loss_end, sents)]
+    end_loss = [dy.pickneglogsoftmax(x, y[2][-1]) for x, y in zip(loss_end, sents)]
     #dy.sum_batches(dy.esum(losses))
     return dy.esum(end_loss)
 
@@ -309,14 +306,16 @@ for ITER in range(1,201):
             trainer.update()
         else:
             loss_Start = calc_start_loss(reps, sents)
-            this_loss += loss_Start.scalar_value()/float(2)
-            train_loss += loss_Start.scalar_value()/float(2)
+            loss_Start_val = loss_Start.scalar_value() / float(2)
+            this_loss += loss_Start_val
+            train_loss += loss_Start_val
             loss_Start.backward()
             trainer.update()
 
             loss_End = calc_end_loss(reps, sents)
-            this_loss += loss_End.scalar_value()/float(2)
-            train_loss += loss_End.scalar_value()/float(2)
+            loss_End_val = loss_End.scalar_value() / float(2)
+            this_loss += loss_End_val
+            train_loss += loss_End_val
             this_sents += BATCH_SIZE
             loss_End.backward()
             trainer.update()
@@ -355,31 +354,45 @@ for ITER in range(1,201):
         else:
             for sent in dev:
                 scores = calc_scores(sent)
-                scores_start = scores[0].npvalue()
-                scores_end = scores[1].npvalue()
-    
-                predict_start = 0
-                predict_end = 1
-                max_score = scores_start[0] + scores_end[1]
-                for i in range(len(sent[3])):
-                    for j in range(i + 1, len(sent[3]) + 1):
-                        if scores_start[i] + scores_end[j] > max_score:
-                            max_score = scores_start[i] + scores_end[j]
-                            predict_start = i
-                            predict_end = j
-                # print (predict_start)
-                # print (predict_end)
+                scores_start = np.argmax(scores[0].npvalue())
+                scores_end = np.argmax(scores[1].npvalue())
+
+                startWordIndex = 0
+                endWordIndex = 0
+                if int(scores_start.real) in sent[0]:
+                    startWordIndex = sent[0].index(int(scores_start.real))
+                if int(scores_end.real) in sent[0]:
+                    endWordIndex = sent[0].index(int(scores_end.real))
+                else:
+                    endWordIndex = startWordIndex
+
+                contextWords = sent[3].split()
+
+                if startWordIndex > endWordIndex:
+                    endWordIndex = startWordIndex + 1
                 answer = ''
-                for i in range(predict_start, predict_end):
-                    answer = answer + str(sent[3][i])
+                for i in range(startWordIndex, endWordIndex + 1):
+                    answer += contextWords[i]
                 qas.append([sent[5], answer])
-                # print (answer)
-    
-                # if predict_start == sent[6]:
-                #    test_correct += 1
-                # sentIndex +=1
-                # if sentIndex % 500 == 0:
-                #    print('Dev ' + str(sentIndex) + ' / ' + str(len(dev)) + ' ,Iter ' + str(ITER))
+
+                # scores = calc_scores(sent)
+                # scores_start = scores[0].npvalue()
+                # scores_end = scores[1].npvalue()
+                #
+                # predict_start = 0
+                # predict_end = 1
+                # max_score = scores_start[0] + scores_end[1]
+                # for i in range(len(sent[3])):
+                #     for j in range(i + 1, len(sent[3]) + 1):
+                #         if scores_start[i] + scores_end[j] > max_score:
+                #             max_score = scores_start[i] + scores_end[j]
+                #             predict_start = i
+                #             predict_end = j
+                # answer = ''
+                # for i in range(predict_start, predict_end):
+                #     answer = answer + str(sent[3][i])
+                # qas.append([sent[5], answer])
+
         result = evaluate(qas)
         print("iter %r: test total=%r, EM=%.4f, F1=%.4f time=%.2fs" % (
             ITER, len(dev), result[0], result[1], time.time() - start_itr))
