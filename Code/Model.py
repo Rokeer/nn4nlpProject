@@ -8,10 +8,12 @@ from torch.nn import Embedding
 from torch.autograd import Variable
 from torch import LongTensor, FloatTensor
 
+from Code.Layers import attentionLayer as atLayer
 
 
 def read_train(fname_src):
     global max_length
+    global max_Query_Length
     lineindex = 0
     with open(fname_src, "r") as f_src:
         for line_src in f_src:
@@ -20,11 +22,11 @@ def read_train(fname_src):
                 continue
             lineindex+=1
             [ID, context, question, answer, start, end] = line_src.split('\t')
-            max_length = max(max_length,len(context))
             sent_context = [w2i[x] for x in context.strip().split()]
             sent_answers = [w2i[x] for x in answer.strip().split()]
             sent_question = [w2i[x] for x in question.strip().split()]
-
+            max_length = max(max_length, len(sent_context))
+            max_Query_Length = max(max_Query_Length,len(sent_question))
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end)
             if lineindex >= 2:
                 break
@@ -90,11 +92,11 @@ def get_GLOVE_word2vec():
 class BiLSTM(nn.Module):
     def __init__(self,input_size = 100, hidden_size = 100, lstm_layers = 1):
         super(BiLSTM, self).__init__()
-        self.bilstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,num_layers=lstm_layers,bidirectional=True)
+        self.bilstm = nn.LSTM(batch_first=True,input_size=input_size, hidden_size=hidden_size,num_layers=lstm_layers,bidirectional=True)
 
     def forward(self, input):
-        h_0 = Variable(torch.zeros(lstm_layers, 1, hidden_size), requires_grad=False)
-        c_0 = Variable(torch.zeros(lstm_layers, 1, hidden_size), requires_grad=False)
+        h_0 = Variable(torch.zeros(2, 1, hidden_size), requires_grad=False)
+        c_0 = Variable(torch.zeros(2, 1, hidden_size), requires_grad=False)
         outputs, (h_n, c_n) = self.bilstm(input, (h_0, c_0))
         return outputs
 
@@ -115,6 +117,7 @@ if __name__ == '__main__':
 
     # the max length of context in train
     max_length = 0
+    max_Query_Length = 0
     word_emb_size = 100
     char_vocab_size = 100
     char_emb_size = 8
@@ -148,22 +151,31 @@ if __name__ == '__main__':
 
     lstm_x = BiLSTM(input_size, hidden_size, lstm_layers)
     lstm_q = BiLSTM(input_size, hidden_size, lstm_layers)
-
+    biattention = atLayer(124,1,13,hidden_size)
     for epoch in range(0, EPOCHS):
         #need to implement BATCH
         for instance in train:
             x = instance[0]
             q = instance[1]
 
-            Ax = loadSentVectors(x)
-            Aq = loadSentVectors(q)
+            Ax = np.array(loadSentVectors(x))
+            Aq = np.array(loadSentVectors(q))
 
-            Ax_tensor = Variable(FloatTensor(Ax))
-            Aq_tensor = Variable(FloatTensor(Aq))
+            Ax_tensor = Variable(FloatTensor([Ax]))
+            Aq_tensor = Variable(FloatTensor([Aq]))
 
-            h = lstm_x.forward(Ax_tensor)
-            u = lstm_q.forward(Aq_tensor)
+            Ax_tensor.unsqueeze(0)
+            Aq_tensor.unsqueeze(0)
 
-            print(h)
+            h = lstm_x(Ax_tensor)
+            u = lstm_q(Aq_tensor)
+
+            h = h.unsqueeze(0)
+            #u = u.unsqueeze(0)
+            print(h.size())
+            print(u.size())
+            attentionOutput = biattention(h,u, True)
+            print(attentionOutput.size())
+
             break
             # Attention layer starts

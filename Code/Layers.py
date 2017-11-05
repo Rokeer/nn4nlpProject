@@ -29,7 +29,7 @@ def reconstruct(tensor, ref, keep):
 
 EMBED_SIZE = 64
 HIDDEN_SIZE = 128
-BATCH_SIZE = 512
+#BATCH_SIZE = 512
 
 contextLength = 50
 queryLength = 10
@@ -82,13 +82,13 @@ class Outputs(nn.Module):
 # u is query vector with length j
 
 class attentionLayer(nn.Module):
-    def __init__(self, JX, M, JQ):
+    def __init__(self, contextLength, numofSentences, QueryLength, embedSize):
         super(attentionLayer, self).__init__()
 
-        self.S_weightVector = torch.nn.Linear(6 * EMBED_SIZE, 1)
-        self.sentenceLength = JX # sentence length in context
-        self.num_sentences = M # number of sentences in context
-        self.questionLength = JQ # question length
+        self.S_weightVector = torch.nn.Linear(6 * embedSize, 1)
+        self.sentenceLength = contextLength # sentence length in context
+        self.num_sentences = numofSentences # number of sentences in context
+        self.questionLength = QueryLength # question length
 
     def forward(self, h_vector, u_vector, is_train):
         # Add new dimension and repeat h vector multiple times in that dimension to ease the multiplication with the query.
@@ -128,6 +128,6 @@ class attentionLayer(nn.Module):
         #else:
         #    p0 = tf.concat(3, [h, u_a, h * u_a])
 
-aLayer = attentionLayer(contextLength, 1, queryLength)
-attentionLayerOutput = aLayer.forward(ContextMatrix, QueryMatrix, is_train=True)
-print ('Done')
+#aLayer = attentionLayer(contextLength, 1, queryLength)
+#attentionLayerOutput = aLayer.forward(ContextMatrix, QueryMatrix, is_train=True)
+#print ('Done')
