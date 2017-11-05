@@ -61,7 +61,6 @@ def linear_logits(args, is_train, dropout, linear, mask):
             output = torch.add(output.data, (torch.ones(mask.size()) - mask.type(torch.FloatTensor)) * 1e30 * -1)
     return output
 
-        outputs = linear_logits(args)
 
 class Outputs(nn.Module):
     def __init__(self, is_train, input_size = 100, dropout=0.0, output_size=1):
