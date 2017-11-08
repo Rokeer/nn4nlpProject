@@ -5,7 +5,7 @@ from torch.autograd import Variable
 from torch import Tensor
 from functools import reduce
 from operator import mul
-import code
+#import code
 
 def flatten(tensor, keep):
     fixed_shape = list(tensor.size())
@@ -77,7 +77,6 @@ class Outputs(nn.Module):
 
 
 
-
 # h is context Vector with length t
 # u is query vector with length j
 
@@ -127,6 +126,56 @@ class attentionLayer(nn.Module):
         #    p0 = tf.concat(3, [h, u_a, h * u_a, h * h_a])
         #else:
         #    p0 = tf.concat(3, [h, u_a, h * u_a])
+
+class HighwayLayer(nn.Module):
+    def __init__(self, size):
+        super(HighwayLayer, self).__init__()
+
+        self.reluNonlinearity = torch.nn.ReLU(inplace=True)
+        self.sigmoidNonlinearity = F.sigmoid
+        self.LinearTransform = torch.nn.Linear(size, size)
+        self.gate_LinearTransform = torch.nn.Linear(size, size)
+        # self.gate_lin.bias.data.fill_(bias_init)
+
+    def getLinearTransofrmation(self, input, linearModel, is_train):
+        if linearModel == 'Linear':
+            flat_vectors = [F.dropout(flatten(arg, 1), training=is_train) for arg in input]
+            flat_outs = self.LinearTransform(torch.cat(flat_vectors, 1))
+            out = reconstruct(flat_outs, input[0], 1)
+            finalValue = out.squeeze(len(list(input[0].size())) - 1)
+            return finalValue
+        elif linearModel == 'gate':
+            flat_vectors = [F.dropout(flatten(arg, 1), training=is_train) for arg in input]
+            flat_outs = self.gate_LinearTransform(torch.cat(flat_vectors, 1))
+            out = reconstruct(flat_outs, input[0], 1)
+            finalValue = out.squeeze(len(list(input[0].size())) - 1)
+            return finalValue
+
+    def forward(self, inputVector, is_train):
+        transformation = getLinearTransofrmation([inputVector], 'Linear', is_train)
+        transformation = self.reluNonlinearity(transformation)
+
+        gate = getLinearTransofrmation([inputVector], 'gate', is_train)
+        gate = self.sigmoidNonlinearity(gate)
+        return torch.add(torch.mul(gate, transformation), torch.mul((1 - gate), inputVector))
+
+class HighwayNetwork(nn.Module):
+    def __init__(self, _numLayers, inputSize):
+        super(HighwayNetwork, self).__init__()
+        self.numLayers = numLayers
+        self.layers = [HighwayLayer(inputSize) for i in range(_numLayers)]
+
+    def forward(self, input, isTrain):
+        currentValue = input
+        for index in range(self.numLayers):
+            # getLinearTransofrmation([currentValue], )
+            output = self.layers[index](currentValue, isTrain)
+            # output = highway_layer(currentValue, bias, bias_start=bias_start, scope="layer_{}".format(layer_idx), wd=wd,
+            #                        input_keep_prob=input_keep_prob, is_train=is_train)
+
+            currentValue = output
+        return currentValue
+
 
 #aLayer = attentionLayer(contextLength, 1, queryLength)
 #attentionLayerOutput = aLayer.forward(ContextMatrix, QueryMatrix, is_train=True)
