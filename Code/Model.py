@@ -1,6 +1,7 @@
 
 from collections import defaultdict
 import numpy as np
+import math
 
 import torch
 import torch.nn as nn
@@ -102,6 +103,10 @@ def loadSentVectors(sentence):
         M.append(vec)
     return M
 
+def calLoss(predict, true):
+    return -1.0 * math.log(predict[true])
+
+
 if __name__ == '__main__':
     ModelConfiguration = Configuration()
     # format of files: each line is "word1 word2 ..." aligned line-by-line
@@ -168,6 +173,8 @@ if __name__ == '__main__':
     o3_output = Outputs(is_train, 10 * hidden_size, outputDropout)
 
     for epoch in range(0, EPOCHS):
+        loss = 0
+
         #need to implement BATCH
         for instance in train:
             x = instance[0]
@@ -215,7 +222,12 @@ if __name__ == '__main__':
             start = flat_start.view(-1, M, JX)
             end = flat_end.view(-1, M, JX)
 
+            loss += calLoss(start, instance[6])
+            loss += calLoss(end, instance[7])
 
 
             break
             # Attention layer starts
+
+        loss = loss / len(train)
+        loss.backward()

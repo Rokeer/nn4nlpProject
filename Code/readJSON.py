@@ -18,7 +18,7 @@ def ConvertJSON(InputPath, OutputPath):
                 for answer in questionAnswer["answers"]:
                     answertext = answer["text"].replace('\n','').replace('\r','').replace("\t"," ").strip()
                     answerIndex = str(answer["answer_start"]).replace('\n','').replace('\r','').replace("\t"," ").strip()
-                    answerEnd = str(answer["answer_start"] + len(answertext)).replace('\n','').replace('\r','').replace("\t"," ").strip()
+                    answerEnd = str(answer["answer_start"] + (len(answertext) - 1)).replace('\n','').replace('\r','').replace("\t"," ").strip()
                     currentLine = qID + '\t' + context+ '\t' + question + '\t' + answertext + '\t' + str(answerIndex) + '\t' + answerEnd +'\n'
                     if currentLine != oldLine:
                         writeDataOnLines.write(currentLine)
