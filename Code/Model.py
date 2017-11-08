@@ -14,7 +14,8 @@ from Code.Layers import attentionLayer as atLayer
 from Code.Layers import BiModeling
 from Code.Layers import Outputs
 from Code.Layers import selection
-
+from Code.ConfigFile import Configuration
+from Code.Layers import BiLSTM
 
 def read_train(fname_src):
     global max_length
@@ -94,17 +95,6 @@ def get_GLOVE_word2vec():
     return word2vec_dict
 
 
-class BiLSTM(nn.Module):
-    def __init__(self,input_size = 100, hidden_size = 100, lstm_layers = 1):
-        super(BiLSTM, self).__init__()
-        self.bilstm = nn.LSTM(batch_first=True,input_size=input_size, hidden_size=hidden_size,num_layers=lstm_layers,bidirectional=True)
-
-    def forward(self, input):
-        h_0 = Variable(torch.zeros(2, 1, hidden_size), requires_grad=False)
-        c_0 = Variable(torch.zeros(2, 1, hidden_size), requires_grad=False)
-        outputs, (h_n, c_n) = self.bilstm(input, (h_0, c_0))
-        return outputs
-
 def loadSentVectors(sentence):
     M = []
     for i in sentence:
@@ -113,28 +103,38 @@ def loadSentVectors(sentence):
     return M
 
 if __name__ == '__main__':
+    ModelConfiguration = Configuration()
     # format of files: each line is "word1 word2 ..." aligned line-by-line
-    train_src_file = "../data/train_lines"
-    dev_src_file = "../data/dev_lines"
-    glove_path = "../data/glove/"
-
-    BATCH_SIZE = 20
+    train_src_file = ModelConfiguration.train_src_file#"../data/train_lines"
+    dev_src_file = ModelConfiguration.dev_src_file #"../data/dev_lines"
+    glove_path = ModelConfiguration.glove_path# "../data/glove/"
+    BATCH_SIZE = ModelConfiguration.BatchSize
+    word_emb_size = ModelConfiguration.word_emb_size
+    input_size = ModelConfiguration.word_emb_size
+    hidden_size = ModelConfiguration.hidden_size
+    lstm_layers = ModelConfiguration.numOfLSTMLayers
+    is_train = ModelConfiguration.is_train
+    EPOCHS = ModelConfiguration.EPOCHS
+    outputDropout = ModelConfiguration.outputDropout
+    maxSentenceLength = ModelConfiguration.MaxSentenceLength
+    maxquestionLength = ModelConfiguration.MaxQuestionLength
+    maxNumberofSentence = ModelConfiguration.MaxNumberOfSentences
 
     # the max length of context in train
-    max_length = 0
-    max_Query_Length = 0
-    word_emb_size = 100
-    char_vocab_size = 100
-    char_emb_size = 8
-    max_num_sents = 10
-    EPOCHS = 1
+    #max_length = 0
+    #max_Query_Length = 0
+    #word_emb_size = 100
+    #char_vocab_size = 100
+    #char_emb_size = 8
+    #max_num_sents = 10
+    #EPOCHS = 1
 
     #LSTM initializer
-    input_size =  100
-    hidden_size = 100
-    lstm_layers = 1
-    is_train = True
-    outputDropout = 0.2
+    #input_size =  100
+    #hidden_size = 100
+    #lstm_layers = 1
+    #is_train = True
+    #outputDropout = 0.2
 
     # Initialize dictionary
     w2i = defaultdict(lambda: len(w2i))
@@ -158,7 +158,7 @@ if __name__ == '__main__':
 
     lstm_x = BiLSTM(input_size, hidden_size, lstm_layers)
     lstm_q = BiLSTM(input_size, hidden_size, lstm_layers)
-    biattention = atLayer(124,1,13,hidden_size)
+    biattention = atLayer(maxSentenceLength,maxNumberofSentence,maxquestionLength,hidden_size)
 
     m1_bilstm = BiModeling(8 * hidden_size, hidden_size, lstm_layers)  # input_size = 100, hidden_size = 100, lstm_layers = 1 , dropout = 0.2
     m2_bilstm = BiModeling(2 * hidden_size, hidden_size, lstm_layers)  # Colin: why 8 times and 2 times
@@ -186,11 +186,10 @@ if __name__ == '__main__':
             Ax_tensor.unsqueeze(0)
             Aq_tensor.unsqueeze(0)
 
-            h = lstm_x(Ax_tensor)
+            h = lstm_x(Ax_tensor) # add dimension for batch
+            h = h.unsqueeze(0)
             u = lstm_q(Aq_tensor)
 
-            h = h.unsqueeze(0)
-            #u = u.unsqueeze(0)
             print(h.size())
             print(u.size())
             attentionOutput = biattention(h,u, True)

@@ -183,7 +183,16 @@ class HighwayNetwork(nn.Module):
             currentValue = output
         return currentValue
 
+class BiLSTM(nn.Module):
+    def __init__(self, input_size=100, hidden_size=100, lstm_layers=1):
+        super(BiLSTM, self).__init__()
+        self.bilstm = nn.LSTM(batch_first=True, input_size=input_size, hidden_size=hidden_size, num_layers=lstm_layers, bidirectional=True)
 
+    def forward(self, input):
+        h_0 = Variable(torch.zeros(2, 1, hidden_size), requires_grad=False)
+        c_0 = Variable(torch.zeros(2, 1, hidden_size), requires_grad=False)
+        outputs, (h_n, c_n) = self.bilstm(input, (h_0, c_0))
+        return outputs
 #aLayer = attentionLayer(contextLength, 1, queryLength)
 #attentionLayerOutput = aLayer.forward(ContextMatrix, QueryMatrix, is_train=True)
 #print ('Done')
