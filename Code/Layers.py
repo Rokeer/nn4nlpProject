@@ -152,17 +152,17 @@ class HighwayLayer(nn.Module):
             return finalValue
 
     def forward(self, inputVector, is_train):
-        transformation = getLinearTransofrmation([inputVector], 'Linear', is_train)
+        transformation = self.getLinearTransofrmation([inputVector], 'Linear', is_train)
         transformation = self.reluNonlinearity(transformation)
 
-        gate = getLinearTransofrmation([inputVector], 'gate', is_train)
+        gate = self.getLinearTransofrmation([inputVector], 'gate', is_train)
         gate = self.sigmoidNonlinearity(gate)
         return torch.add(torch.mul(gate, transformation), torch.mul((1 - gate), inputVector))
 
 class HighwayNetwork(nn.Module):
     def __init__(self, _numLayers, inputSize):
         super(HighwayNetwork, self).__init__()
-        self.numLayers = numLayers
+        self.numLayers = _numLayers
         self.layers = [HighwayLayer(inputSize) for i in range(_numLayers)]
 
     def forward(self, input, isTrain):
