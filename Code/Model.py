@@ -4,11 +4,16 @@ import numpy as np
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+
 from torch.nn import Embedding
 from torch.autograd import Variable
 from torch import LongTensor, FloatTensor
 
 from Code.Layers import attentionLayer as atLayer
+from Code.Layers import BiModeling
+from Code.Layers import Outputs
+from Code.Layers import selection
 
 
 def read_train(fname_src):
@@ -128,6 +133,8 @@ if __name__ == '__main__':
     input_size =  100
     hidden_size = 100
     lstm_layers = 1
+    is_train = True
+    outputDropout = 0.2
 
     # Initialize dictionary
     w2i = defaultdict(lambda: len(w2i))
@@ -152,11 +159,23 @@ if __name__ == '__main__':
     lstm_x = BiLSTM(input_size, hidden_size, lstm_layers)
     lstm_q = BiLSTM(input_size, hidden_size, lstm_layers)
     biattention = atLayer(124,1,13,hidden_size)
+
+    m1_bilstm = BiModeling(8 * hidden_size, hidden_size, lstm_layers)  # input_size = 100, hidden_size = 100, lstm_layers = 1 , dropout = 0.2
+    m2_bilstm = BiModeling(2 * hidden_size, hidden_size, lstm_layers)  # Colin: why 8 times and 2 times
+
+    o1_output = Outputs(is_train, 10 * hidden_size, outputDropout)  # is_train, input_size = 100, dropout=0.0, output_size=1
+    o2_bilstm = BiModeling(14 * hidden_size, hidden_size, lstm_layers)
+    o3_output = Outputs(is_train, 10 * hidden_size, outputDropout)
+
     for epoch in range(0, EPOCHS):
         #need to implement BATCH
         for instance in train:
             x = instance[0]
             q = instance[1]
+
+            JX = x.shape[2]
+            M = x.shape[1]
+            N = x.shape[0]
 
             Ax = np.array(loadSentVectors(x))
             Aq = np.array(loadSentVectors(q))
@@ -176,6 +195,28 @@ if __name__ == '__main__':
             print(u.size())
             attentionOutput = biattention(h,u, True)
             print(attentionOutput.size())
+
+            m1 = m1_bilstm(attentionOutput.view(N, M * JX, -1))
+            m2 = m2_bilstm(m1.view(N, M * JX, -1))
+
+            o1 = o1_output((m2, attentionOutput))  # Colin: what is x_mask
+
+            a1i = selection(m2.view(N, M * JX, 2 * hidden_size), o1.view(N, M * JX))
+            a1i = a1i.unsqueeze(1).unsqueeze(1).repeat(1, M, JX, 1)
+
+            m2 = m2.view(N, M, JX, -1)
+            o2 = o2_bilstm(torch.cat([attentionOutput, m2, a1i, m2 * a1i], 3).squeeze())
+            o3 = o3_output((o2, attentionOutput))
+
+            flat_o1 = o1.view(-1, M * JX)
+            flat_start = F.softmax(flat_o1)
+            flat_o2 = o2.view(-1, M * JX)
+            flat_end = F.softmax(flat_o2)
+
+            start = flat_start.view(-1, M, JX)
+            end = flat_end.view(-1, M, JX)
+
+
 
             break
             # Attention layer starts

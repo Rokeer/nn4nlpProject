@@ -7,6 +7,13 @@ from functools import reduce
 from operator import mul
 #import code
 
+def selection(target, logits):
+    flat_logits = flatten(logits, 1)
+    flat_out = F.softmax(flat_logits)
+    out = reconstruct(flat_out, logits, 1)
+    out = out.unsqueeze(len(out.size())).mul(target).sum(len(target.size())-2)
+    return out
+
 def flatten(tensor, keep):
     fixed_shape = list(tensor.size())
     start = len(fixed_shape) - keep
@@ -63,7 +70,7 @@ def linear_logits(args, is_train, dropout, linear, mask):
 
 
 class Outputs(nn.Module):
-    def __init__(self, is_train, input_size = 100, dropout=0.0, output_size=1):
+    def __init__(self, is_train, input_size = 100, dropout=0.2, output_size=1):
         super(Outputs, self).__init__()
 
         self.dropout = dropout
