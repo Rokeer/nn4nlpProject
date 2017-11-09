@@ -11,12 +11,12 @@ from torch.nn import Embedding
 from torch.autograd import Variable
 from torch import LongTensor, FloatTensor
 
-from Code.Layers import attentionLayer as atLayer
-from Code.Layers import BiModeling
-from Code.Layers import Outputs
-from Code.Layers import selection
-from Code.ConfigFile import Configuration
-from Code.Layers import BiLSTM
+from Layers import attentionLayer as atLayer
+from Layers import BiModeling
+from Layers import Outputs
+from Layers import selection
+from ConfigFile import Configuration
+from Layers import BiLSTM
 
 max_length = 0
 max_Query_Length = 0
@@ -176,7 +176,7 @@ if __name__ == '__main__':
     biattention = atLayer(maxSentenceLength, maxNumberofSentence, maxquestionLength,hidden_size)
 
     m1_bilstm = BiModeling(8 * hidden_size, hidden_size, lstm_layers)  # input_size = 100, hidden_size = 100, lstm_layers = 1 , dropout = 0.2
-    m2_bilstm = BiModeling(2 * hidden_size, hidden_size, lstm_layers)  # Colin: why 8 times and 2 times
+    m2_bilstm = BiModeling(2 * hidden_size, hidden_size, lstm_layers)
 
     o1_output = Outputs(is_train, 10 * hidden_size, outputDropout)  # is_train, input_size = 100, dropout=0.0, output_size=1
     o2_bilstm = BiModeling(14 * hidden_size, hidden_size, lstm_layers)

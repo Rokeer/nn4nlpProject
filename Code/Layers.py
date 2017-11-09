@@ -50,7 +50,7 @@ class BiModeling(nn.Module):
         self.bilstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=lstm_layers, dropout=dropout, bidirectional=True)
 
     def forward(self, inputs):
-        seq_len, batch_size, feature_size = inputs.size()
+        batch_size, seq_len, feature_size = inputs.size()
         h_0 = Variable(torch.zeros(2, batch_size, 100), requires_grad=False)
         c_0 = Variable(torch.zeros(2, batch_size, 100), requires_grad=False)
         outputs, (h_n, c_n) = self.bilstm(inputs, (h_0, c_0))
