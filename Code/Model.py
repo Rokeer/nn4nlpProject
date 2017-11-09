@@ -18,6 +18,9 @@ from Code.Layers import selection
 from Code.ConfigFile import Configuration
 from Code.Layers import BiLSTM
 
+max_length = 0
+max_Query_Length = 0
+
 def read_train(fname_src):
     global max_length
     global max_Query_Length
@@ -35,9 +38,8 @@ def read_train(fname_src):
             max_length = max(max_length, len(sent_context))
             max_Query_Length = max(max_Query_Length,len(sent_question))
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end)
-            if lineindex >= 2:
+            if lineindex >= 1000:
                 break
-
 
 def read_dev(fname_src):
     global max_length
@@ -71,7 +73,7 @@ def read_dev(fname_src):
                 answer = line_src.split('\t')[3]
                 answers.append(answer)
                 sent_answers.append([w2i[x] for x in answer.strip().split()])
-                if lineindex >= 2:
+                if lineindex >= 1000:
                     break
 
 # This function uses the global w2i dictionary and gets the glove vector for each word as a dictionary
@@ -124,7 +126,11 @@ if __name__ == '__main__':
     maxSentenceLength = ModelConfiguration.MaxSentenceLength
     maxquestionLength = ModelConfiguration.MaxQuestionLength
     maxNumberofSentence = ModelConfiguration.MaxNumberOfSentences
-
+    maxNumberofSentence = 1
+    maxquestionLength = max_Query_Length
+    maxSentenceLength = max_length
+    #global max_length
+    #global max_Query_Length
     # the max length of context in train
     #max_length = 0
     #max_Query_Length = 0
@@ -156,6 +162,10 @@ if __name__ == '__main__':
                         else np.random.multivariate_normal(np.zeros(word_emb_size), np.eye(word_emb_size))
                         for wid in range(word_vocab_size)])
 
+
+    maxquestionLength = max_Query_Length
+    maxSentenceLength = max_length
+
     # char_embedding = Embedding(char_vocab_size, char_emb_size)
     #word_embed = Embedding(word_vocab_size, word_emb_size)
 
@@ -163,7 +173,7 @@ if __name__ == '__main__':
 
     lstm_x = BiLSTM(input_size, hidden_size, lstm_layers)
     lstm_q = BiLSTM(input_size, hidden_size, lstm_layers)
-    biattention = atLayer(maxSentenceLength,maxNumberofSentence,maxquestionLength,hidden_size)
+    biattention = atLayer(maxSentenceLength, maxNumberofSentence, maxquestionLength,hidden_size)
 
     m1_bilstm = BiModeling(8 * hidden_size, hidden_size, lstm_layers)  # input_size = 100, hidden_size = 100, lstm_layers = 1 , dropout = 0.2
     m2_bilstm = BiModeling(2 * hidden_size, hidden_size, lstm_layers)  # Colin: why 8 times and 2 times
@@ -174,33 +184,35 @@ if __name__ == '__main__':
 
     for epoch in range(0, EPOCHS):
         loss = 0
-
         #need to implement BATCH
         for instance in train:
             x = instance[0]
             q = instance[1]
-
-            JX = x.shape[2]
-            M = x.shape[1]
-            N = x.shape[0]
 
             Ax = np.array(loadSentVectors(x))
             Aq = np.array(loadSentVectors(q))
 
             Ax_tensor = Variable(FloatTensor([Ax]))
             Aq_tensor = Variable(FloatTensor([Aq]))
+            p2d = (2,100)
+            F.pad(Ax_tensor,p2d,mode = 'constant', value = 0)
 
-            Ax_tensor.unsqueeze(0)
-            Aq_tensor.unsqueeze(0)
 
             h = lstm_x(Ax_tensor) # add dimension for batch
             h = h.unsqueeze(0)
             u = lstm_q(Aq_tensor)
 
-            print(h.size())
-            print(u.size())
+            Ax_tensor = Ax_tensor.unsqueeze(0)
+            Aq_tensor = Aq_tensor.unsqueeze(0)
+
+            JX = Ax_tensor.size()[2]
+            M = Ax_tensor.size()[1]
+            N = Ax_tensor.size()[0]
+
+            #print(h.size())
+            #print(u.size())
             attentionOutput = biattention(h,u, True)
-            print(attentionOutput.size())
+            #print(attentionOutput.size())
 
             m1 = m1_bilstm(attentionOutput.view(N, M * JX, -1))
             m2 = m2_bilstm(m1.view(N, M * JX, -1))
@@ -229,5 +241,6 @@ if __name__ == '__main__':
             break
             # Attention layer starts
 
-        loss = loss / len(train)
+        loss /= len(train)
+        print(loss)
         loss.backward()
