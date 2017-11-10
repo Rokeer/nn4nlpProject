@@ -11,12 +11,12 @@ from torch.nn import Embedding
 from torch.autograd import Variable
 from torch import LongTensor, FloatTensor
 
-from Code.Layers import attentionLayer as atLayer
-from Code.Layers import BiModeling
-from Code.Layers import Outputs
-from Code.Layers import selection
-from Code.ConfigFile import Configuration
-from Code.Layers import BiLSTM
+from Layers import attentionLayer as atLayer
+from Layers import BiModeling
+from Layers import Outputs
+from Layers import selection
+from ConfigFile import Configuration
+from Layers import BiLSTM
 
 
 class BiDAFModel(nn.Module):

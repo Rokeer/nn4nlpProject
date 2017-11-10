@@ -7,9 +7,10 @@ import torch.nn.functional as F
 from torch.nn import Embedding
 from torch.autograd import Variable
 from torch import LongTensor, FloatTensor
-from Code.ConfigFile import Configuration
-from Code.Model import BiDAFModel
-from Code.trainer import Trainer
+from ConfigFile import Configuration
+from Model import BiDAFModel
+from trainer import Trainer
+import time
 
 def read_train(configuration):
     max_length = 0
@@ -28,7 +29,7 @@ def read_train(configuration):
             max_length = max(max_length, len(sent_context))
             max_Query_Length = max(max_Query_Length,len(sent_question))
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end)
-            if lineindex >= 10:
+            if lineindex >= 20000:
                 break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
@@ -65,7 +66,7 @@ def read_dev(fname_src):
                 answer = line_src.split('\t')[3]
                 answers.append(answer)
                 sent_answers.append([w2i[x] for x in answer.strip().split()])
-                if lineindex >= 10:
+                if lineindex >= 10000:
                     break
 
 # This function uses the global w2i dictionary and gets the glove vector for each word as a dictionary
@@ -112,9 +113,17 @@ BiDAFTrainer = Trainer(config,BiDAF_Model)
 for epoch in range(0, config.EPOCHS):
     loss = 0
     # need to implement BATCH
+    numOfSamples = 0
+    start = time.time()
     for instance in train:
         sampleLoss = BiDAFTrainer.step(instance, config.is_train)
         loss += sampleLoss
+        numOfSamples+=1
+        if numOfSamples%2 == 0:
+            print (str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : "+str(loss / numOfSamples))
+            end = time.time()
+            print("run time = " + str(end - start))
+            start = time.time()
+
     loss /= len(train)
     print(loss)
-    #loss.backward()

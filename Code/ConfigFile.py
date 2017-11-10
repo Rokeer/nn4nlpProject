@@ -11,7 +11,7 @@ class Configuration():
         self.train_src_file = "../data/train_lines"
         self.dev_src_file = "../data/dev_lines"
         self.glove_path = "../data/glove/"
-        self.EPOCHS = 1
+        self.EPOCHS = 10
         self.hidden_size = 100
         self.numOfHighwayLayers = 2
         self.numOfLSTMLayers = 1
