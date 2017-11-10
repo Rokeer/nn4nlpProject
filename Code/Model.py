@@ -88,8 +88,8 @@ class BiDAFModel(nn.Module):
 
         flat_o1 = o1.view(-1, M * JX)
         flat_start = F.softmax(flat_o1)
-        flat_o2 = o2.view(-1, M * JX)
-        flat_end = F.softmax(flat_o2)
+        flat_o3 = o3.view(-1, M * JX)
+        flat_end = F.softmax(flat_o3)
 
         start = flat_start.view(-1, M, JX)
         end = flat_end.view(-1, M, JX)
