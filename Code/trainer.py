@@ -13,14 +13,14 @@ class Trainer(object):
         # assert isinstance(model, Model)
         self.config = config
         self.model = model
-        self.optimizer = O.Adadelta(config.init_lr)
+        self.optimizer = O.Adadelta(self.model.parameters(),config.init_lr)
 
     def step(self, instance, isTraining, get_summary=False):
         config = self.config
         # get input Sample
-        m_start, m_end = self.model(instance)
-        startLoss = self.model.getLoss(m_start)
-        endLoss = self.model.getLoss(m_end)
+        m_start, m_end, start_Logits, end_logits = self.model(instance)
+        startLoss = self.model.getLoss(start_Logits, instance[6])
+        endLoss = self.model.getLoss(end_logits, instance[7])
         self.optimizer.zero_grad()
         startLoss.backward()
         endLoss.backward()
