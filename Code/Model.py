@@ -38,7 +38,7 @@ def read_train(fname_src):
             max_length = max(max_length, len(sent_context))
             max_Query_Length = max(max_Query_Length,len(sent_question))
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end)
-            if lineindex >= 1000:
+            if lineindex >= 10:
                 break
 
 def read_dev(fname_src):
@@ -73,7 +73,7 @@ def read_dev(fname_src):
                 answer = line_src.split('\t')[3]
                 answers.append(answer)
                 sent_answers.append([w2i[x] for x in answer.strip().split()])
-                if lineindex >= 1000:
+                if lineindex >= 10:
                     break
 
 # This function uses the global w2i dictionary and gets the glove vector for each word as a dictionary
@@ -98,15 +98,19 @@ def get_GLOVE_word2vec():
     return word2vec_dict
 
 
-def loadSentVectors(sentence):
+def loadSentVectors(sentence, maxPad):
     M = []
     for i in sentence:
         vec = emb_mat[i]
         M.append(vec)
+    l = maxPad-len(M)
+    for i in range(l):
+        M.append(word_emb_size * [0])
+    return M
     return M
 
 def calLoss(predict, true):
-    return -1.0 * math.log(predict[true])
+    return -1.0 * math.log(predict.data[0][0][int(true)])
 
 
 if __name__ == '__main__':
@@ -189,14 +193,11 @@ if __name__ == '__main__':
             x = instance[0]
             q = instance[1]
 
-            Ax = np.array(loadSentVectors(x))
-            Aq = np.array(loadSentVectors(q))
+            Ax = np.array(loadSentVectors(x, maxSentenceLength))
+            Aq = np.array(loadSentVectors(q, maxquestionLength))
 
             Ax_tensor = Variable(FloatTensor([Ax]))
             Aq_tensor = Variable(FloatTensor([Aq]))
-            p2d = (2,100)
-            F.pad(Ax_tensor,p2d,mode = 'constant', value = 0)
-
 
             h = lstm_x(Ax_tensor) # add dimension for batch
             h = h.unsqueeze(0)
@@ -223,7 +224,7 @@ if __name__ == '__main__':
             a1i = a1i.unsqueeze(1).unsqueeze(1).repeat(1, M, JX, 1)
 
             m2 = m2.view(N, M, JX, -1)
-            o2 = o2_bilstm(torch.cat([attentionOutput, m2, a1i, m2 * a1i], 3).squeeze())
+            o2 = o2_bilstm(torch.cat([attentionOutput, m2, a1i, m2 * a1i], 3).squeeze(1)) # we removed the number of sentences
             o3 = o3_output((o2, attentionOutput))
 
             flat_o1 = o1.view(-1, M * JX)
@@ -238,7 +239,7 @@ if __name__ == '__main__':
             loss += calLoss(end, instance[7])
 
 
-            break
+            #break
             # Attention layer starts
 
         loss /= len(train)
