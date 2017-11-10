@@ -94,15 +94,13 @@ class BiDAFModel(nn.Module):
         start = flat_start.view(-1, M, JX)
         end = flat_end.view(-1, M, JX)
 
-        return start, end
+        return start, end, o1, o3
 
     def getLoss(self,predict, true):
-        #input = autograd.Variable(torch.randn(3, 5), requires_grad=True)
-        #target = autograd.Variable(torch.LongTensor(3).random_(5))
-        #output = loss(input, target)
-        output = self.loss(predict, true)
+        target = Variable(torch.LongTensor([true]))
+        output = self.loss(predict, target)
         return output
-        return -1.0 * math.log(predict.data[0][0][int(true)])
+        #return -1.0 * math.log(predict.data[0][0][int(true)])
 #
 # if __name__ == '__main__':
 #     ModelConfiguration = Configuration()
