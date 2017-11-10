@@ -21,6 +21,8 @@ from Code.Layers import BiLSTM
 
 class BiDAFModel(nn.Module):
     def __init__(self, config):
+        super(BiDAFModel, self).__init__()
+        self.Config = config
         self.train_src_file = config.train_src_file  # "../data/train_lines"
         self.dev_src_file = config.dev_src_file  # "../data/dev_lines"
         self.glove_path = config.glove_path  # "../data/glove/"
@@ -36,27 +38,37 @@ class BiDAFModel(nn.Module):
         self.maxquestionLength = config.MaxQuestionLength
         self.maxNumberofSentence = config.MaxNumberOfSentences
         self.maxNumberofSentence = 1
-        self.maxquestionLength = config.max_Query_Length
-        self.maxSentenceLength = config.max_length
+        self.maxquestionLength = config.MaxQuestionLength
+        self.maxSentenceLength = config.MaxSentenceLength
+
+        self.lstm_x = BiLSTM(self.input_size, self.hidden_size, self.lstm_layers)
+        self.lstm_q = BiLSTM(self.input_size, self.hidden_size, self.lstm_layers)
+        self.biattention = atLayer(self.maxSentenceLength, self.maxNumberofSentence, self.maxquestionLength, self.hidden_size)
+
+        self.m1_bilstm = BiModeling(8 * self.hidden_size, self.hidden_size, self.lstm_layers)  # input_size = 100, hidden_size = 100, lstm_layers = 1 , dropout = 0.2
+        self.m2_bilstm = BiModeling(2 * self.hidden_size, self.hidden_size, self.lstm_layers)
+
+        self.o1_output = Outputs(self.is_train, 10 * self.hidden_size, self.outputDropout)  # is_train, input_size = 100, dropout=0.0, output_size=1
+        self.o2_bilstm = BiModeling(14 * self.hidden_size, self.hidden_size, self.lstm_layers)
+        self.o3_output = Outputs(self.is_train, 10 * self.hidden_size, self.outputDropout)
+
         self.loss = nn.CrossEntropyLoss()
-
-        lstm_x = BiLSTM(self.input_size, self.hidden_size, self.lstm_layers)
-        lstm_q = BiLSTM(self.input_size, self.hidden_size, self.lstm_layers)
-        biattention = atLayer(self.maxSentenceLength, self.maxNumberofSentence, self.maxquestionLength, self.hidden_size)
-
-        m1_bilstm = BiModeling(8 * self.hidden_size, self.hidden_size, self.lstm_layers)  # input_size = 100, hidden_size = 100, lstm_layers = 1 , dropout = 0.2
-        m2_bilstm = BiModeling(2 * self.hidden_size, self.hidden_size, self.self.lstm_layers)
-
-        o1_output = Outputs(self.is_train, 10 * self.hidden_size, self.outputDropout)  # is_train, input_size = 100, dropout=0.0, output_size=1
-        o2_bilstm = BiModeling(14 * self.hidden_size, self.hidden_size, self.lstm_layers)
-        o3_output = Outputs(self.is_train, 10 * self.hidden_size, self.outputDropout)
+    def loadSentVectors(self,sentence, maxPad):
+        M = []
+        for i in sentence:
+            vec = self.Config.emb_mat[i]
+            M.append(vec)
+        l = maxPad - len(M)
+        for i in range(l):
+            M.append(self.Config.word_emb_size * [0])
+        return M
 
     def forward(self, instance):
         x = instance[0]
         q = instance[1]
 
-        Ax = np.array(loadSentVectors(x, self.maxSentenceLength))
-        Aq = np.array(loadSentVectors(q, self.maxquestionLength))
+        Ax = np.array(self.loadSentVectors(x, self.maxSentenceLength))
+        Aq = np.array(self.loadSentVectors(q, self.maxquestionLength))
 
         Ax_tensor = Variable(FloatTensor([Ax]))
         Aq_tensor = Variable(FloatTensor([Aq]))
@@ -97,7 +109,7 @@ class BiDAFModel(nn.Module):
         return start, end, o1, o3
 
     def getLoss(self,predict, true):
-        target = Variable(torch.LongTensor([true]))
+        target = Variable(torch.LongTensor([int(true)]))
         output = self.loss(predict, target)
         return output
         #return -1.0 * math.log(predict.data[0][0][int(true)])

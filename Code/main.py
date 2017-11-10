@@ -11,11 +11,11 @@ from Code.ConfigFile import Configuration
 from Code.Model import BiDAFModel
 from Code.trainer import Trainer
 
-def read_train(fname_src):
-    global max_length
-    global max_Query_Length
+def read_train(configuration):
+    max_length = 0
+    max_Query_Length = 0
     lineindex = 0
-    with open(fname_src, "r") as f_src:
+    with open(config.train_src_file, "r") as f_src:
         for line_src in f_src:
             line_src = line_src.replace('\n','').replace('\r','').strip()
             if line_src == "":
@@ -30,9 +30,11 @@ def read_train(fname_src):
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end)
             if lineindex >= 10:
                 break
+    config.MaxSentenceLength = max_length
+    config.MaxQuestionLength = max_Query_Length
 
 def read_dev(fname_src):
-    global max_length
+    #global max_length
     lineindex = 0
     question = context = ''
     answers, sent_answers, sent_context, sent_question = ([] for i in range(4))
@@ -50,7 +52,7 @@ def read_dev(fname_src):
                 if context != '' or question != '':
                     yield (sent_context, sent_question, sent_answers, context, question, answers, start, end)
                 context = line_src.split('\t')[1]
-                max_length = max(max_length, len(context))
+                #max_length = max(max_length, len(context))
 
                 question = line_src.split('\t')[2]
                 start = int(line_src.split('\t')[4])
@@ -88,20 +90,10 @@ def get_GLOVE_word2vec(glove_path, word_emb_size):
     return word2vec_dict
 
 
-def loadSentVectors(sentence, maxPad, word_emb_size):
-    M = []
-    for i in sentence:
-        vec = emb_mat[i]
-        M.append(vec)
-    l = maxPad-len(M)
-    for i in range(l):
-        M.append(word_emb_size * [0])
-    return M
-
 
 config = Configuration()
 w2i = defaultdict(lambda: len(w2i))
-train = list(read_train(config.train_src_file))
+train = list(read_train(config))
 unk_src = w2i["<unk>"]
 w2i = defaultdict(lambda: unk_src, w2i)
 word_vocab_size = len(w2i)
@@ -112,6 +104,7 @@ widx2vec_dict = {w2i[word]: vec for word, vec in word2vec_dict.items() if word i
 emb_mat = np.array([widx2vec_dict[wid] if wid in widx2vec_dict
                     else np.random.multivariate_normal(np.zeros(config.word_emb_size), np.eye(config.word_emb_size))
                     for wid in range(word_vocab_size)])
+config.emb_mat = emb_mat
 
 BiDAF_Model = BiDAFModel(config)
 BiDAFTrainer = Trainer(config,BiDAF_Model)
@@ -120,7 +113,7 @@ for epoch in range(0, config.EPOCHS):
     loss = 0
     # need to implement BATCH
     for instance in train:
-        sampleLoss = BiDAFTrainer.step(instance)
+        sampleLoss = BiDAFTrainer.step(instance, config.is_train)
         loss += sampleLoss
     loss /= len(train)
     print(loss)
