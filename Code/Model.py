@@ -25,7 +25,7 @@ class BiDAFModel(nn.Module):
         self.glove_path = config.glove_path  # "../data/glove/"
         self.BATCH_SIZE = config.BatchSize
         self.word_emb_size = config.word_emb_size
-        self.input_size = config.word_emb_size
+        self.input_size = config.word_emb_size + config.CNNEmbeddingSize
         self.hidden_size = config.hidden_size
         self.lstm_layers = config.numOfLSTMLayers
         self.is_train = config.is_train
@@ -118,10 +118,10 @@ class BiDAFModel(nn.Module):
         #print(Aq_tensor.size())
 
         xx = torch.cat((Ax_tensor, Cx), 2)
-        qq = torch.cat((Aq_tensor, Cq), 1)
+        qq = torch.cat((Aq_tensor, Cq), 2)
 
-        xx = xx.unsqueeze(0)
-        qq = qq.unsqueeze(0)
+        #xx = xx.unsqueeze(0)
+        #qq = qq.unsqueeze(0)
 
         xx = self.hw_1(xx, self.is_train)
         qq = self.hw_1(qq, self.is_train)
@@ -142,12 +142,12 @@ class BiDAFModel(nn.Module):
         h = h.unsqueeze(0)
         u = self.lstm_q(Aq_tensor)'''
 
-        Ax_tensor = Ax_tensor.unsqueeze(0)
-        Aq_tensor = Aq_tensor.unsqueeze(0)
+        xx = xx.unsqueeze(0)
+        qq = qq.unsqueeze(0)
 
-        JX = Ax_tensor.size()[2]
-        M = Ax_tensor.size()[1]
-        N = Ax_tensor.size()[0]
+        JX = xx.size()[2]
+        M = xx.size()[1]
+        N = xx.size()[0]
 
         attentionOutput = self.biattention(h, u, self.is_train)
 

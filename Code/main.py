@@ -92,7 +92,7 @@ def get_GLOVE_word2vec(glove_path, word_emb_size):
     glove_file = "{}glove.6B.{}d.txt".format(glove_path, word_emb_size)
     total = int(4e5) #6B
     word2vec_dict = {}
-    with open(glove_file, 'r', encoding='utf-8') as gf:
+    with open(glove_file, 'r') as gf:
         for line in gf:
             emb = line.lstrip().rstrip().split(" ")
             word = emb[0]
