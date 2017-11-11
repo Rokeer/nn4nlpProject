@@ -46,8 +46,8 @@ class BiDAFModel(nn.Module):
 
         self.hw_1 = HighwayNetwork(config.numOfHighwayLayers, config.hidden_size)
 
-        self.lstm_x = BiLSTM(self.input_size, self.hidden_size, self.lstm_layers)
-        self.lstm_q = BiLSTM(self.input_size, self.hidden_size, self.lstm_layers)
+        self.lstm_x = BiModeling(self.input_size, self.hidden_size, self.lstm_layers)
+        self.lstm_q = BiModeling(self.input_size, self.hidden_size, self.lstm_layers)
         if self.use_char_emb:
             self.filter_sizes = [100]
             self.heights = [5]
