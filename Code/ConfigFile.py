@@ -13,11 +13,11 @@ class Configuration():
         self.MaxQuestionLength = 20
         self.MaxNumberOfSentences = 8
         self.max_word_size = 8
-        self.BatchSize = 50
+        self.BatchSize = 10
         self.train_src_file = "../data/train_lines"
         self.dev_src_file = "../data/dev_lines"
         self.glove_path = "../data/glove/"
-        self.EPOCHS = 10
+        self.EPOCHS = 12
         self.hidden_size = 200
         self.numOfHighwayLayers = 2
         self.numOfLSTMLayers = 1
