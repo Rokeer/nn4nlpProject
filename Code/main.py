@@ -47,8 +47,8 @@ def read_train(configuration):
             max_length = max(max_length, len(sent_context))
             max_Query_Length = max(max_Query_Length,len(sent_question))
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq)
-            if lineindex >= 20:
-                break
+            # if lineindex >= 20:
+            #     break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
@@ -84,7 +84,7 @@ def read_dev(fname_src):
                 answer = line_src.split('\t')[3]
                 answers.append(answer)
                 sent_answers.append([w2i[x] for x in answer.strip().split()])
-                if lineindex >= 10000:
+                if lineindex >= 100:
                     break
 
 # This function uses the global w2i dictionary and gets the glove vector for each word as a dictionary
@@ -108,6 +108,18 @@ def get_GLOVE_word2vec(glove_path, word_emb_size):
 
     return word2vec_dict
 
+def asMinutes(s):
+    m = math.floor(s / 60)
+    s -= m * 60
+    return '%dm %ds' % (m, s)
+
+
+def timeSince(since, percent):
+    now = time.time()
+    s = now - since
+    es = s / (percent)
+    rs = es - s
+    return '%s (- %s)' % (asMinutes(s), asMinutes(rs))
 
 
 config = Configuration()
@@ -145,9 +157,11 @@ for epoch in range(0, config.EPOCHS):
         numOfSamples+=1
         if numOfSamples%2 == 0:
             print (str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : "+str(loss / numOfSamples))
-            end = time.time()
-            print("run time = " + str(end - start))
-            start = time.time()
+            # end = time.time()
+            # print("run time = " + str(end - start))
+            # start = time.time()
+            print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
+                                         numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
 
     loss /= len(train)
     print(loss)
