@@ -80,74 +80,62 @@ class BiDAFModel(nn.Module):
         return V
 
     def forward(self, instance):
-        x = instance[0]
-        q = instance[1]
-        cx = []
-        cq = []
+        Context = instance[0]
+        Query = instance[1]
+        ContextChar = []
+        QueryChar = []
 
         if self.use_char_emb:
-            cx = instance[8]
-            cq = instance[9]
+            ContextChar = instance[8]
+            QueryChar = instance[9]
 
-            cx = self.padVectors(cx, self.maxSentenceLength, self.max_word_size)
-            cq = self.padVectors(cq, self.MaxQuestionLength, self.max_word_size)
+            ContextChar = self.padVectors(ContextChar, self.maxSentenceLength, self.max_word_size)
+            QueryChar = self.padVectors(QueryChar, self.MaxQuestionLength, self.max_word_size)
 
-            Acx = self.char_embed(Variable(LongTensor(cx)))
-            Acx = Acx.unsqueeze(0)
-            Acq = self.char_embed(Variable(LongTensor(cq)))
-            Acq = Acq.unsqueeze(0)
+            ContextChar_beforeCNN = self.char_embed(Variable(LongTensor(ContextChar)))
+            ContextChar_beforeCNN = ContextChar_beforeCNN.unsqueeze(0)
+            QueryChar_beforeCNN = self.char_embed(Variable(LongTensor(QueryChar)))
+            QueryChar_beforeCNN = QueryChar_beforeCNN.unsqueeze(0)
 
-            Cx = self.cnn_x(Acx, self.filter_sizes, self.heights, self.padding)
-            Cq = self.cnn_q(Acq, self.filter_sizes, self.heights, self.padding)
+            ContextChar_CNN = self.cnn_x(ContextChar_beforeCNN, self.filter_sizes, self.heights, self.padding)
+            QueryChar_CNN = self.cnn_q(QueryChar_beforeCNN, self.filter_sizes, self.heights, self.padding)
 
-            Cx = Cx.permute(0, 2, 1)
-            Cq = Cq.permute(0, 2, 1)
+            ContextChar_CNN = ContextChar_CNN.permute(0, 2, 1)
+            QueryChar_CNN = QueryChar_CNN.permute(0, 2, 1)
 
         #print(Cx.size())
         #print(Cq.size())
 
-        Ax = self.loadSentVectors(x)
-        Aq = self.loadSentVectors(q)
-        Ax = np.array(self.padVectors(Ax, self.maxSentenceLength, self.word_emb_size))
-        Aq = np.array(self.padVectors(Aq, self.MaxQuestionLength, self.word_emb_size))
+        ContextWord = self.loadSentVectors(Context)
+        QueryWord = self.loadSentVectors(Query)
+        ContextWord = np.array(self.padVectors(ContextWord, self.maxSentenceLength, self.word_emb_size))
+        QueryWord = np.array(self.padVectors(QueryWord, self.MaxQuestionLength, self.word_emb_size))
 
-        Ax_tensor = Variable(FloatTensor([Ax]))
-        Aq_tensor = Variable(FloatTensor([Aq]))
+        ContextWord_tensor = Variable(FloatTensor([ContextWord]))
+        QueryWord_tensor = Variable(FloatTensor([QueryWord]))
 
         #print(Ax_tensor.size())
         #print(Aq_tensor.size())
 
-        xx = torch.cat((Ax_tensor, Cx), 2)
-        qq = torch.cat((Aq_tensor, Cq), 2)
+        Context_Char_Word = torch.cat((ContextWord_tensor, ContextChar_CNN), 2)
+        Query_Char_Word = torch.cat((QueryWord_tensor, QueryChar_CNN), 2)
 
         #xx = xx.unsqueeze(0)
         #qq = qq.unsqueeze(0)
 
-        xx = self.hw_1(xx, self.is_train)
-        qq = self.hw_1(qq, self.is_train)
+        Context_Char_Word = self.hw_1(Context_Char_Word, self.is_train)
+        Query_Char_Word = self.hw_1(Query_Char_Word, self.is_train)
 
-        h = self.lstm_x(xx)# add dimension for batch
+        h = self.lstm_x(Context_Char_Word)# add dimension for batch
         h = h.unsqueeze(0)
-        u = self.lstm_q(qq)
-#old code:
-        '''Ax = np.array(self.loadSentVectors(x, self.maxSentenceLength))
-        Aq = np.array(self.loadSentVectors(q, self.maxquestionLength))
+        u = self.lstm_q(Query_Char_Word)
 
-        Ax_tensor = Variable(FloatTensor([Ax]))
-        Aq_tensor = Variable(FloatTensor([Aq]))
+        Context_Char_Word = Context_Char_Word.unsqueeze(0)
+        Query_Char_Word = Query_Char_Word.unsqueeze(0)
 
-
-
-        h = self.lstm_x(Ax_tensor)  # add dimension for batch
-        h = h.unsqueeze(0)
-        u = self.lstm_q(Aq_tensor)'''
-
-        xx = xx.unsqueeze(0)
-        qq = qq.unsqueeze(0)
-
-        JX = xx.size()[2]
-        M = xx.size()[1]
-        N = xx.size()[0]
+        JX = Context_Char_Word.size()[2]
+        M = Context_Char_Word.size()[1]
+        N = Context_Char_Word.size()[0]
 
         attentionOutput = self.biattention(h, u, self.is_train)
 
