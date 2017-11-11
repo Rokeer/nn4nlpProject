@@ -12,7 +12,7 @@ from torch.autograd import Variable
 from torch import LongTensor, FloatTensor
 
 from Layers import attentionLayer as atLayer
-from Layers import BiModeling, Outputs, selection, BiLSTM, Multi_Conv1D, Conv1D
+from Layers import BiModeling, Outputs, selection, BiLSTM, Multi_Conv1D, Conv1D, HighwayNetwork
 from ConfigFile import Configuration
 
 
@@ -43,6 +43,8 @@ class BiDAFModel(nn.Module):
         self.emb_mat = config.emb_mat
         self.max_word_size = config.max_word_size
         self.padding = config.padding
+
+        self.hw_1 = HighwayNetwork(config.numOfHighwayLayers, config.hidden_size)
 
         self.lstm_x = BiLSTM(self.input_size, self.hidden_size, self.lstm_layers)
         self.lstm_q = BiLSTM(self.input_size, self.hidden_size, self.lstm_layers)
@@ -121,9 +123,12 @@ class BiDAFModel(nn.Module):
         xx = xx.unsqueeze(0)
         qq = qq.unsqueeze(0)
 
-        h = self.lstm_x(Ax_tensor)# add dimension for batch
+        xx = self.hw_1(xx, self.is_train)
+        qq = self.hw_1(qq, self.is_train)
+
+        h = self.lstm_x(xx)# add dimension for batch
         h = h.unsqueeze(0)
-        u = self.lstm_q(Aq_tensor)
+        u = self.lstm_q(qq)
 #old code:
         '''Ax = np.array(self.loadSentVectors(x, self.maxSentenceLength))
         Aq = np.array(self.loadSentVectors(q, self.maxquestionLength))
