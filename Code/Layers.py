@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-from torch import Tensor
 from functools import reduce
 from operator import mul
 #import code
@@ -48,11 +47,11 @@ class BiModeling(nn.Module):
     def __init__(self, input_size = 100, hidden_size = 100, lstm_layers = 1 , dropout = 0.2):
         super(BiModeling, self).__init__()
         self.bilstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=lstm_layers, dropout=dropout, bidirectional=True)
-
+        self.hidden_size = hidden_size
     def forward(self, inputs):
         batch_size, seq_len, feature_size = inputs.size()
-        h_0 = Variable(torch.zeros(2, batch_size, 100), requires_grad=False)
-        c_0 = Variable(torch.zeros(2, batch_size, 100), requires_grad=False)
+        h_0 = Variable(torch.zeros(2, batch_size, self.hidden_size), requires_grad=False)
+        c_0 = Variable(torch.zeros(2, batch_size, self.hidden_size), requires_grad=False)
         outputs, (h_n, c_n) = self.bilstm(inputs, (h_0, c_0))
         return outputs
 
@@ -197,3 +196,55 @@ class BiLSTM(nn.Module):
 #aLayer = attentionLayer(contextLength, 1, queryLength)
 #attentionLayerOutput = aLayer.forward(ContextMatrix, QueryMatrix, is_train=True)
 #print ('Done')
+
+# Covolutional NN for char based word embedding
+class Conv1D(nn.Module):
+    def __init__(self, in_channels, out_channels, filter_height, filter_width, is_train=None, keep_prob=1.0, padding=0):
+        super(Conv1D, self).__init__()
+
+        self.is_train = is_train
+        self.dropout = nn.Dropout(1. - keep_prob)
+        self.keep_prob = keep_prob
+        kernel_size = (filter_height, filter_width)
+        self.conv2d_ = nn.Conv2d(in_channels, out_channels, kernel_size, bias=True, padding=padding)
+
+    def forward(self, inputs):
+        if self.is_train is not None and self.keep_prob < 1.0:
+            self.dropout(inputs)
+        '''
+        tf: input tensor of shape [batch, in_height, in_width, in_channels]
+        pt: input tensor of shape [batch, in_channels, in_height, in_width]
+        '''
+        t_in = inputs.permute(0, 3, 1, 2)
+        xxc = self.conv2d_(t_in)
+        out, argmax_out = torch.max(F.relu(xxc), -1)
+        return out
+
+class Multi_Conv1D(nn.Module):
+    def __init__(self, is_train, cnn_dropout_keep_prob):
+        super(Multi_Conv1D, self).__init__()
+        self.is_train = is_train
+        self.cnn_dropout_keep_prob = cnn_dropout_keep_prob
+
+    def forward(self, inputs, filter_sizes, heights, padding, share_variable=False):
+        assert len(filter_sizes) == len(heights)
+        outs = []
+        # for different filter sizes and height pairs
+        for idx, (filter, height) in enumerate(zip(filter_sizes, heights)):
+            if filter == 0:
+                continue
+            # input shape: size of batch, input height, input width, input channels
+            batch_size, in_height, in_width, in_channels = inputs.size()
+            filter_height = 1
+            filter_width = height
+            out_channels = filter
+            '''
+            Comment: Pytorch doesn't support reusable variables. However, we can reuse these
+            variables by passing data through the same layers.
+            '''
+            conv1d = Conv1D(in_channels, out_channels, filter_height, filter_width,is_train=self.is_train, keep_prob=self.cnn_dropout_keep_prob, padding=padding)
+            out = conv1d(inputs)
+            outs.append(out)
+
+        concat_out = torch.cat(outs, 2)
+        return concat_out

@@ -12,11 +12,8 @@ from torch.autograd import Variable
 from torch import LongTensor, FloatTensor
 
 from Layers import attentionLayer as atLayer
-from Layers import BiModeling
-from Layers import Outputs
-from Layers import selection
+from Layers import BiModeling, Outputs, selection, BiLSTM, Multi_Conv1D, Conv1D
 from ConfigFile import Configuration
-from Layers import BiLSTM
 
 
 class BiDAFModel(nn.Module):
@@ -35,15 +32,28 @@ class BiDAFModel(nn.Module):
         self.EPOCHS = config.EPOCHS
         self.outputDropout = config.outputDropout
         self.maxSentenceLength = config.MaxSentenceLength
-        self.maxquestionLength = config.MaxQuestionLength
+        self.MaxQuestionLength = config.MaxQuestionLength
         self.maxNumberofSentence = config.MaxNumberOfSentences
         self.maxNumberofSentence = 1
-        self.maxquestionLength = config.MaxQuestionLength
         self.maxSentenceLength = config.MaxSentenceLength
+        self.use_char_emb = config.use_char_emb
+        self.cnn_dropout_keep_prob = config.cnn_dropout_keep_prob
+        self.char_vocab_size = config.char_vocab_size
+        self.char_emb_size = config.char_emb_size
+        self.emb_mat = config.emb_mat
+        self.max_word_size = config.max_word_size
+        self.padding = config.padding
 
         self.lstm_x = BiLSTM(self.input_size, self.hidden_size, self.lstm_layers)
         self.lstm_q = BiLSTM(self.input_size, self.hidden_size, self.lstm_layers)
-        self.biattention = atLayer(self.maxSentenceLength, self.maxNumberofSentence, self.maxquestionLength, self.hidden_size)
+        if self.use_char_emb:
+            self.filter_sizes = [100]
+            self.heights = [5]
+            self.cnn_x = Multi_Conv1D(self.is_train, self.cnn_dropout_keep_prob)
+            self.cnn_q = Multi_Conv1D(self.is_train, self.cnn_dropout_keep_prob)
+            self.char_embed = Embedding(self.char_vocab_size, self.char_emb_size)
+
+        self.biattention = atLayer(self.maxSentenceLength, self.maxNumberofSentence, self.MaxQuestionLength, self.hidden_size)
 
         self.m1_bilstm = BiModeling(8 * self.hidden_size, self.hidden_size, self.lstm_layers)  # input_size = 100, hidden_size = 100, lstm_layers = 1 , dropout = 0.2
         self.m2_bilstm = BiModeling(2 * self.hidden_size, self.hidden_size, self.lstm_layers)
@@ -53,29 +63,79 @@ class BiDAFModel(nn.Module):
         self.o3_output = Outputs(self.is_train, 10 * self.hidden_size, self.outputDropout)
 
         self.loss = nn.CrossEntropyLoss()
-    def loadSentVectors(self,sentence, maxPad):
+
+    def loadSentVectors(self, sentence):
         M = []
         for i in sentence:
-            vec = self.Config.emb_mat[i]
+            vec = self.emb_mat[i]
             M.append(vec)
-        l = maxPad - len(M)
-        for i in range(l):
-            M.append(self.Config.word_emb_size * [0])
         return M
+
+    def padVectors(self, V, max_vector_size, embed_size):
+        l = max_vector_size - len(V)
+        for i in range(l):
+            V.append(embed_size * [0])
+        return V
 
     def forward(self, instance):
         x = instance[0]
         q = instance[1]
+        cx = []
+        cq = []
 
-        Ax = np.array(self.loadSentVectors(x, self.maxSentenceLength))
+        if self.use_char_emb:
+            cx = instance[8]
+            cq = instance[9]
+
+            cx = self.padVectors(cx, self.maxSentenceLength, self.max_word_size)
+            cq = self.padVectors(cq, self.MaxQuestionLength, self.max_word_size)
+
+            Acx = self.char_embed(Variable(LongTensor(cx)))
+            Acx = Acx.unsqueeze(0)
+            Acq = self.char_embed(Variable(LongTensor(cq)))
+            Acq = Acq.unsqueeze(0)
+
+            Cx = self.cnn_x(Acx, self.filter_sizes, self.heights, self.padding)
+            Cq = self.cnn_q(Acq, self.filter_sizes, self.heights, self.padding)
+
+            Cx = Cx.permute(0, 2, 1)
+            Cq = Cq.permute(0, 2, 1)
+
+        #print(Cx.size())
+        #print(Cq.size())
+
+        Ax = self.loadSentVectors(x)
+        Aq = self.loadSentVectors(q)
+        Ax = np.array(self.padVectors(Ax, self.maxSentenceLength, self.word_emb_size))
+        Aq = np.array(self.padVectors(Aq, self.MaxQuestionLength, self.word_emb_size))
+
+        Ax_tensor = Variable(FloatTensor([Ax]))
+        Aq_tensor = Variable(FloatTensor([Aq]))
+
+        #print(Ax_tensor.size())
+        #print(Aq_tensor.size())
+
+        xx = torch.cat((Ax_tensor, Cx), 2)
+        qq = torch.cat((Aq_tensor, Cq), 1)
+
+        xx = xx.unsqueeze(0)
+        qq = qq.unsqueeze(0)
+
+        h = self.lstm_x(Ax_tensor)# add dimension for batch
+        h = h.unsqueeze(0)
+        u = self.lstm_q(Aq_tensor)
+#old code:
+        '''Ax = np.array(self.loadSentVectors(x, self.maxSentenceLength))
         Aq = np.array(self.loadSentVectors(q, self.maxquestionLength))
 
         Ax_tensor = Variable(FloatTensor([Ax]))
         Aq_tensor = Variable(FloatTensor([Aq]))
 
+
+
         h = self.lstm_x(Ax_tensor)  # add dimension for batch
         h = h.unsqueeze(0)
-        u = self.lstm_q(Aq_tensor)
+        u = self.lstm_q(Aq_tensor)'''
 
         Ax_tensor = Ax_tensor.unsqueeze(0)
         Aq_tensor = Aq_tensor.unsqueeze(0)

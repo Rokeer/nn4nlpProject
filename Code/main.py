@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, Counter
 import numpy as np
 import math
 import torch
@@ -18,18 +18,36 @@ def read_train(configuration):
     lineindex = 0
     with open(config.train_src_file, "r") as f_src:
         for line_src in f_src:
+            cx = []
+            cq = []
             line_src = line_src.replace('\n','').replace('\r','').strip()
             if line_src == "":
                 continue
             lineindex+=1
             [ID, context, question, answer, start, end] = line_src.split('\t')
+
             sent_context = [w2i[x] for x in context.strip().split()]
+            for w in context.strip().split():
+                for c in w:
+                    char_counter[c] += 1
+                cxi = [c2i[c] for c in list(w)]
+                cx.append((cxi + config.max_word_size * [0])[:config.max_word_size])
+
             sent_answers = [w2i[x] for x in answer.strip().split()]
+            for w in answer.strip().split():
+                for c in w:
+                    char_counter[c] += 1
+                cqi = [c2i[c] for c in list(w)]
+                cq.append((cqi + config.max_word_size * [0])[:config.max_word_size])
+
             sent_question = [w2i[x] for x in question.strip().split()]
+            for q in question.strip().split():
+                for c in q:
+                    char_counter[c] += 1
             max_length = max(max_length, len(sent_context))
             max_Query_Length = max(max_Query_Length,len(sent_question))
-            yield (sent_context, sent_question, sent_answers, context, question, answer, start, end)
-            if lineindex >= 20000:
+            yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq)
+            if lineindex >= 200:
                 break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
@@ -94,6 +112,9 @@ def get_GLOVE_word2vec(glove_path, word_emb_size):
 
 config = Configuration()
 w2i = defaultdict(lambda: len(w2i))
+c2i = defaultdict(lambda: len(c2i))
+char_counter = Counter()
+
 train = list(read_train(config))
 unk_src = w2i["<unk>"]
 w2i = defaultdict(lambda: unk_src, w2i)
