@@ -127,6 +127,9 @@ w2i = defaultdict(lambda: len(w2i))
 c2i = defaultdict(lambda: len(c2i))
 char_counter = Counter()
 
+unk_char_src = c2i["<unk>"]
+c2i = defaultdict(lambda: unk_char_src, c2i)
+
 train = list(read_train(config))
 unk_src = w2i["<unk>"]
 w2i = defaultdict(lambda: unk_src, w2i)
