@@ -136,11 +136,11 @@ class BiDAFModel(nn.Module):
         Query_Char_Word = self.hw_1(Query_Char_Word_list, self.is_train)
 
         h = self.lstm_x(Context_Char_Word)# add dimension for batch
-        h = h.unsqueeze(0)
+        h = h.unsqueeze(1)
         u = self.lstm_q(Query_Char_Word)
 
-        Context_Char_Word = Context_Char_Word.unsqueeze(0)
-        Query_Char_Word = Query_Char_Word.unsqueeze(0)
+        Context_Char_Word = Context_Char_Word.unsqueeze(1)
+        Query_Char_Word = Query_Char_Word.unsqueeze(1)
 
         JX = Context_Char_Word.size()[2]
         M = Context_Char_Word.size()[1]
@@ -149,16 +149,18 @@ class BiDAFModel(nn.Module):
         attentionOutput = self.biattention(h, u, self.is_train)
 
         m1 = self.m1_bilstm(attentionOutput.view(N, M * JX, -1))
-        m2 = self.m2_bilstm(m1.view(N, M * JX, -1))
+        m2 = self.m2_bilstm(m1.contiguous().view(N, M * JX, -1))
+        # m1 = self.m1_bilstm(attentionOutput)
+        # m2 = self.m2_bilstm(m1)
 
-        o1 = self.o1_output((m2, attentionOutput))  # Colin: what is x_mask
+        o1 = self.o1_output((m2.contiguous(), attentionOutput))  # Colin: what is x_mask
 
         a1i = selection(m2.view(N, M * JX, 2 * self.hidden_size), o1.view(N, M * JX))
         a1i = a1i.unsqueeze(1).unsqueeze(1).repeat(1, M, JX, 1)
 
         m2 = m2.view(N, M, JX, -1)
         o2 = self.o2_bilstm(torch.cat([attentionOutput, m2, a1i, m2 * a1i], 3).squeeze(1))  # we removed the number of sentences
-        o3 = self.o3_output((o2, attentionOutput))
+        o3 = self.o3_output((o2.contiguous(), attentionOutput))
 
         flat_o1 = o1.view(-1, M * JX)
         flat_start = F.softmax(flat_o1)
