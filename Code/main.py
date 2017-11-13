@@ -176,6 +176,7 @@ for epoch in range(0, config.EPOCHS):
     loss = 0
     # need to implement BATCH
     numOfSamples = 0
+    numOfBatch = 0
     start = time.time()
     for instance in train:
         # for sid in range(0, len(train), config.BatchSize):
@@ -183,9 +184,10 @@ for epoch in range(0, config.EPOCHS):
 
         sampleLoss = BiDAFTrainer.step(instance, config.is_train)
         loss += sampleLoss
-        numOfSamples+=1
-        if numOfSamples%2 == 0:
-            print (str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : "+str(loss / numOfSamples))
+        numOfSamples += len(train)
+        numOfBatch += 1
+        if numOfBatch%2 == 0:
+            print (str(epoch) + " , " + str(numOfBatch) + " ," + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : "+str(loss / numOfSamples))
             # end = time.time()
             # print("run time = " + str(end - start))
             # start = time.time()
