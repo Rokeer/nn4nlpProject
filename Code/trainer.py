@@ -15,10 +15,10 @@ class Trainer(object):
         self.model = model
         self.optimizer = O.Adadelta(self.model.parameters(),config.init_learningRate)
 
-    def step(self, instance, isTraining, get_summary=False):
+    def step(self, instances, isTraining, get_summary=False):
         config = self.config
         # get input Sample
-        m_start, m_end, start_Logits, end_logits = self.model.forward(instance)
+        m_start, m_end, start_Logits, end_logits = self.model.forward(instances)
         startLoss = self.model.getLoss(start_Logits, instance[6])
         endLoss = self.model.getLoss(end_logits, instance[7])
         self.optimizer.zero_grad()

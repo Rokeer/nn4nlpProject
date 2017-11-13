@@ -47,8 +47,8 @@ def read_train(configuration):
             max_length = max(max_length, len(sent_context))
             max_Query_Length = max(max_Query_Length,len(sent_question))
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq)
-            # if lineindex >= 20:
-            #     break
+            if lineindex >= 100:
+                break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
@@ -146,6 +146,32 @@ config.emb_mat = emb_mat
 BiDAF_Model = BiDAFModel(config)
 BiDAFTrainer = Trainer(config,BiDAF_Model)
 
+
+for epoch in range(0, config.EPOCHS):
+    loss = 0
+    # need to implement BATCH
+    numOfSamples = 0
+    start = time.time()
+    # for instance in train:
+    for sid in range(0, len(train), config.BatchSize):
+        instances = train[sid:sid + config.BatchSize]
+
+        sampleLoss = BiDAFTrainer.step(instances, config.is_train)
+        loss += sampleLoss
+        numOfSamples+=1
+        if numOfSamples%2 == 0:
+            print (str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : "+str(loss / numOfSamples))
+            # end = time.time()
+            # print("run time = " + str(end - start))
+            # start = time.time()
+            print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
+                                         numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
+
+    loss /= len(train)
+    print(loss)
+    torch.save(BiDAF_Model.state_dict(), '../models/epoch.pkl')
+
+''' Don't touch anything below this line '''
 for epoch in range(0, config.EPOCHS):
     loss = 0
     # need to implement BATCH

@@ -46,7 +46,7 @@ QueryMatrix = Variable(torch.rand(1,queryLength, 2*EMBED_SIZE))
 class BiModeling(nn.Module):
     def __init__(self, input_size = 100, hidden_size = 100, lstm_layers = 1 , dropout = 0.2):
         super(BiModeling, self).__init__()
-        self.bilstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=lstm_layers, dropout=dropout, bidirectional=True)
+        self.bilstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=lstm_layers, dropout=dropout, bidirectional=True, batch_first=True)
         self.hidden_size = hidden_size
     def forward(self, inputs):
         batch_size, seq_len, feature_size = inputs.size()

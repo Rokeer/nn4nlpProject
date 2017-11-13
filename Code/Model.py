@@ -79,52 +79,61 @@ class BiDAFModel(nn.Module):
             V.append(embed_size * [0])
         return V
 
-    def forward(self, instance):
-        Context = instance[0]
-        Query = instance[1]
-        ContextChar = []
-        QueryChar = []
+    def forward(self, instances):
+        Context_Char_Word_list = Variable(torch.zeros(len(instances), self.maxSentenceLength, 2 * self.word_emb_size).type(torch.FloatTensor))
+        Query_Char_Word_list = Variable(torch.zeros(len(instances), self.MaxQuestionLength, 2 * self.word_emb_size).type(torch.FloatTensor))
+        count = 0
+        # Context_Char_Word_list = []
+        # Query_Char_Word_list = []
+        for instance in instances:
+            Context = instance[0]
+            Query = instance[1]
+            ContextChar = []
+            QueryChar = []
 
-        if self.use_char_emb:
-            ContextChar = instance[8]
-            QueryChar = instance[9]
+            if self.use_char_emb:
+                ContextChar = instance[8]
+                QueryChar = instance[9]
 
-            ContextChar = self.padVectors(ContextChar, self.maxSentenceLength, self.max_word_size)
-            QueryChar = self.padVectors(QueryChar, self.MaxQuestionLength, self.max_word_size)
+                ContextChar = self.padVectors(ContextChar, self.maxSentenceLength, self.max_word_size)
+                QueryChar = self.padVectors(QueryChar, self.MaxQuestionLength, self.max_word_size)
 
-            ContextChar_beforeCNN = self.char_embed(Variable(LongTensor(ContextChar)))
-            ContextChar_beforeCNN = ContextChar_beforeCNN.unsqueeze(0)
-            QueryChar_beforeCNN = self.char_embed(Variable(LongTensor(QueryChar)))
-            QueryChar_beforeCNN = QueryChar_beforeCNN.unsqueeze(0)
+                ContextChar_beforeCNN = self.char_embed(Variable(LongTensor(ContextChar)))
+                ContextChar_beforeCNN = ContextChar_beforeCNN.unsqueeze(0)
+                QueryChar_beforeCNN = self.char_embed(Variable(LongTensor(QueryChar)))
+                QueryChar_beforeCNN = QueryChar_beforeCNN.unsqueeze(0)
 
-            ContextChar_CNN = self.cnn_x(ContextChar_beforeCNN, self.filter_sizes, self.heights, self.padding)
-            QueryChar_CNN = self.cnn_q(QueryChar_beforeCNN, self.filter_sizes, self.heights, self.padding)
+                ContextChar_CNN = self.cnn_x(ContextChar_beforeCNN, self.filter_sizes, self.heights, self.padding)
+                QueryChar_CNN = self.cnn_q(QueryChar_beforeCNN, self.filter_sizes, self.heights, self.padding)
 
-            ContextChar_CNN = ContextChar_CNN.permute(0, 2, 1)
-            QueryChar_CNN = QueryChar_CNN.permute(0, 2, 1)
+                ContextChar_CNN = ContextChar_CNN.permute(0, 2, 1)
+                QueryChar_CNN = QueryChar_CNN.permute(0, 2, 1)
 
-        #print(Cx.size())
-        #print(Cq.size())
+            #print(Cx.size())
+            #print(Cq.size())
 
-        ContextWord = self.loadSentVectors(Context)
-        QueryWord = self.loadSentVectors(Query)
-        ContextWord = np.array(self.padVectors(ContextWord, self.maxSentenceLength, self.word_emb_size))
-        QueryWord = np.array(self.padVectors(QueryWord, self.MaxQuestionLength, self.word_emb_size))
+            ContextWord = self.loadSentVectors(Context)
+            QueryWord = self.loadSentVectors(Query)
+            ContextWord = np.array(self.padVectors(ContextWord, self.maxSentenceLength, self.word_emb_size))
+            QueryWord = np.array(self.padVectors(QueryWord, self.MaxQuestionLength, self.word_emb_size))
 
-        ContextWord_tensor = Variable(FloatTensor([ContextWord]))
-        QueryWord_tensor = Variable(FloatTensor([QueryWord]))
+            ContextWord_tensor = Variable(FloatTensor([ContextWord]))
+            QueryWord_tensor = Variable(FloatTensor([QueryWord]))
 
-        #print(Ax_tensor.size())
-        #print(Aq_tensor.size())
+            #print(Ax_tensor.size())
+            #print(Aq_tensor.size())
 
-        Context_Char_Word = torch.cat((ContextWord_tensor, ContextChar_CNN), 2)
-        Query_Char_Word = torch.cat((QueryWord_tensor, QueryChar_CNN), 2)
-
+            Context_Char_Word = torch.cat((ContextWord_tensor, ContextChar_CNN), 2)
+            Query_Char_Word = torch.cat((QueryWord_tensor, QueryChar_CNN), 2)
+            Context_Char_Word_list[count] = Context_Char_Word
+            Query_Char_Word_list[count] = Query_Char_Word
+            count = count + 1
         #xx = xx.unsqueeze(0)
         #qq = qq.unsqueeze(0)
-
-        Context_Char_Word = self.hw_1(Context_Char_Word, self.is_train)
-        Query_Char_Word = self.hw_1(Query_Char_Word, self.is_train)
+        # Context_Char_Word = Variable(LongTensor(Context_Char_Word_list))
+        # Query_Char_Word = Variable(LongTensor(Query_Char_Word_list))
+        Context_Char_Word = self.hw_1(Context_Char_Word_list, self.is_train)
+        Query_Char_Word = self.hw_1(Query_Char_Word_list, self.is_train)
 
         h = self.lstm_x(Context_Char_Word)# add dimension for batch
         h = h.unsqueeze(0)
