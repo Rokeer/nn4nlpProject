@@ -171,7 +171,7 @@ for epoch in range(0, config.EPOCHS):
 
     loss /= len(train)
     print(loss)
-    torch.save(BiDAF_Model.state_dict(), '../models/epoch.pkl')
+    torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'.pkl')
 
 ''' Don't touch anything below this line '''
 '''
