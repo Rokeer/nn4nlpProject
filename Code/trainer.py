@@ -6,7 +6,8 @@ import torch.optim as O
 import os.path
 import numpy as np
 import random
-
+from torch import LongTensor, FloatTensor
+from torch.autograd import Variable
 
 class Trainer(object):
     def __init__(self, config, model):
@@ -19,8 +20,11 @@ class Trainer(object):
         config = self.config
         # get input Sample
         m_start, m_end, start_Logits, end_logits = self.model.forward(instances)
-        startLoss = self.model.getLoss(start_Logits, instance[6])
-        endLoss = self.model.getLoss(end_logits, instance[7])
+
+        startVlas = Variable(torch.LongTensor([int(i[6]) for i in instances]))
+        startLoss = self.model.getLoss(start_Logits, startVlas)
+        endVlas = Variable(torch.LongTensor([int(i[7]) for i in instances]))
+        endLoss = self.model.getLoss(end_logits, endVlas)
         self.optimizer.zero_grad()
         Finalloss = startLoss + endLoss#.backward()
         Finalloss.backward()

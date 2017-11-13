@@ -173,8 +173,8 @@ class BiDAFModel(nn.Module):
         return start, end, o1, o3
 
     def getLoss(self,predict, true):
-        target = Variable(torch.LongTensor([int(true)]))
-        output = self.loss(predict, target)
+        #target = Variable(torch.LongTensor([int(true)]))
+        output = self.loss(predict, true)
         return output
         #return -1.0 * math.log(predict.data[0][0][int(true)])
 #
