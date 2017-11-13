@@ -160,7 +160,7 @@ for epoch in range(0, config.EPOCHS):
         sampleLoss = BiDAFTrainer.step(instances, config.is_train)
         loss += sampleLoss
         numOfBatch += 1
-        numOfSamples+=len(train)
+        numOfSamples+=len(instances)
         if numOfBatch%1 == 0:
             print (str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : "+str(loss / numOfSamples))
             # end = time.time()
