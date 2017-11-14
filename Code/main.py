@@ -154,6 +154,7 @@ for epoch in range(0, config.EPOCHS):
     numOfBatch = 0
     start = time.time()
     # for instance in train:
+    print("Start Training:" + str(epoch))
     for sid in range(0, len(train), config.BatchSize):
         instances = train[sid:sid + config.BatchSize]
 
@@ -162,12 +163,13 @@ for epoch in range(0, config.EPOCHS):
         numOfBatch += 1
         numOfSamples+=len(instances)
         if numOfBatch%1 == 0:
-            print (str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : "+str(loss / numOfSamples))
-            # end = time.time()
-            # print("run time = " + str(end - start))
-            # start = time.time()
-            print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
-                                         numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
+
+            end = time.time()
+            print (str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : " + str(
+                loss / numOfSamples)+", run time = " + str(end - start))
+            start = time.time()
+            # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
+            #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
 
     loss /= len(train)
     print(loss)
