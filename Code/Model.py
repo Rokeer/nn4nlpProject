@@ -53,9 +53,9 @@ class BiDAFModel(nn.Module):
         self.lstm_x = BiModeling(self.input_size, self.hidden_size, self.lstm_layers)
         self.lstm_q = BiModeling(self.input_size, self.hidden_size, self.lstm_layers)
 
-        if usecuda:
-            self.lstm_x = self.lstm_x.cuda()
-            self.lstm_q = self.lstm_q.cuda()
+        # if usecuda:
+        #     self.lstm_x = self.lstm_x.cuda()
+        #     self.lstm_q = self.lstm_q.cuda()
 
         if self.use_char_emb:
             self.filter_sizes = [100]
@@ -163,7 +163,8 @@ class BiDAFModel(nn.Module):
         # Query_Char_Word = Variable(LongTensor(Query_Char_Word_list))
         Context_Char_Word = self.hw_1(Context_Char_Word_list, self.is_train)
         Query_Char_Word = self.hw_1(Query_Char_Word_list, self.is_train)
-        print (Context_Char_Word.data.is_cuda())
+        if Context_Char_Word.data.is_cuda():
+            print "alert"
         h = self.lstm_x(Context_Char_Word)# add dimension for batch
         h = h.unsqueeze(1)
         u = self.lstm_q(Query_Char_Word)
