@@ -11,7 +11,7 @@ class Configuration():
 
         self.MaxSentenceLength = 400
         self.MaxQuestionLength = 20
-        self.MaxNumberOfSentences = 8
+        self.MaxNumberOfSentences = 1
         self.max_word_size = 8
         self.BatchSize = 60
         self.train_src_file = "../data/train_lines"

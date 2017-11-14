@@ -12,14 +12,14 @@ from torch.autograd import Variable
 class Trainer(object):
     def __init__(self, config, model):
         # assert isinstance(model, Model)
-        self.config = config
+        # self.config = config
         self.model = model
         self.optimizer = O.Adadelta(self.model.parameters(),config.init_learningRate)
 
-    def step(self, instances, isTraining, get_summary=False):
-        config = self.config
+    def step(self, instances, config, isTraining, get_summary=False):
+        # config = self.config
         # get input Sample
-        m_start, m_end, start_Logits, end_logits = self.model.forward(instances)
+        m_start, m_end, start_Logits, end_logits = self.model.forward(instances, config)
 
         startVlas = Variable(torch.LongTensor([int(i[6]) for i in instances]))
         startLoss = self.model.getLoss(start_Logits, startVlas)

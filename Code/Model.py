@@ -31,11 +31,10 @@ class BiDAFModel(nn.Module):
         self.is_train = config.is_train
         self.EPOCHS = config.EPOCHS
         self.outputDropout = config.outputDropout
-        self.maxSentenceLength = config.MaxSentenceLength
         self.MaxQuestionLength = config.MaxQuestionLength
         self.maxNumberofSentence = config.MaxNumberOfSentences
         self.maxNumberofSentence = 1
-        self.maxSentenceLength = config.MaxSentenceLength
+        # self.maxSentenceLength = config.MaxSentenceLength
         self.use_char_emb = config.use_char_emb
         self.cnn_dropout_keep_prob = config.cnn_dropout_keep_prob
         self.char_vocab_size = config.char_vocab_size
@@ -55,7 +54,7 @@ class BiDAFModel(nn.Module):
             self.cnn_q = Multi_Conv1D(self.is_train, self.cnn_dropout_keep_prob)
             self.char_embed = Embedding(self.char_vocab_size, self.char_emb_size)
 
-        self.biattention = atLayer(self.maxSentenceLength, self.maxNumberofSentence, self.MaxQuestionLength, self.hidden_size)
+        self.biattention = atLayer(self.hidden_size)
 
         self.m1_bilstm = BiModeling(8 * self.hidden_size, self.hidden_size, self.lstm_layers)  # input_size = 100, hidden_size = 100, lstm_layers = 1 , dropout = 0.2
         self.m2_bilstm = BiModeling(2 * self.hidden_size, self.hidden_size, self.lstm_layers)
@@ -79,8 +78,8 @@ class BiDAFModel(nn.Module):
             V.append(embed_size * [0])
         return V
 
-    def forward(self, instances):
-        Context_Char_Word_list = Variable(torch.zeros(len(instances), self.maxSentenceLength, 2 * self.word_emb_size).type(torch.FloatTensor))
+    def forward(self, instances, config):
+        Context_Char_Word_list = Variable(torch.zeros(len(instances), config.MaxSentenceLength, 2 * self.word_emb_size).type(torch.FloatTensor))
         Query_Char_Word_list = Variable(torch.zeros(len(instances), self.MaxQuestionLength, 2 * self.word_emb_size).type(torch.FloatTensor))
         count = 0
         # Context_Char_Word_list = []
@@ -95,7 +94,7 @@ class BiDAFModel(nn.Module):
                 ContextChar = instance[8]
                 QueryChar = instance[9]
 
-                ContextChar = self.padVectors(ContextChar, self.maxSentenceLength, self.max_word_size)
+                ContextChar = self.padVectors(ContextChar, config.MaxSentenceLength, self.max_word_size)
                 QueryChar = self.padVectors(QueryChar, self.MaxQuestionLength, self.max_word_size)
 
                 ContextChar_beforeCNN = self.char_embed(Variable(LongTensor(ContextChar)))
@@ -114,7 +113,7 @@ class BiDAFModel(nn.Module):
 
             ContextWord = self.loadSentVectors(Context)
             QueryWord = self.loadSentVectors(Query)
-            ContextWord = np.array(self.padVectors(ContextWord, self.maxSentenceLength, self.word_emb_size))
+            ContextWord = np.array(self.padVectors(ContextWord, config.MaxSentenceLength, self.word_emb_size))
             QueryWord = np.array(self.padVectors(QueryWord, self.MaxQuestionLength, self.word_emb_size))
 
             ContextWord_tensor = Variable(FloatTensor([ContextWord]))
@@ -146,7 +145,7 @@ class BiDAFModel(nn.Module):
         M = Context_Char_Word.size()[1]
         N = Context_Char_Word.size()[0]
 
-        attentionOutput = self.biattention(h, u, self.is_train)
+        attentionOutput = self.biattention(h, u, self.is_train, config)
 
         m1 = self.m1_bilstm(attentionOutput.view(N, M * JX, -1))
         m2 = self.m2_bilstm(m1.contiguous().view(N, M * JX, -1))

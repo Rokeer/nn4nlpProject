@@ -131,6 +131,7 @@ unk_char_src = c2i["<unk>"]
 c2i = defaultdict(lambda: unk_char_src, c2i)
 
 train = list(read_train(config))
+train.sort(key=lambda x: len(x[0]))
 print(str(config.MaxSentenceLength))
 unk_src = w2i["<unk>"]
 w2i = defaultdict(lambda: unk_src, w2i)
@@ -157,11 +158,10 @@ for epoch in range(0, config.EPOCHS):
     # for instance in train:
     print("Start Training:" + str(epoch))
     for sid in range(0, len(train), config.BatchSize):
-        print(1)
         instances = train[sid:sid + config.BatchSize]
-        print(2)
-
-        sampleLoss = BiDAFTrainer.step(instances, config.is_train)
+        config.MaxSentenceLength = len(instances[len(instances)-1][0])
+        # print(config.MaxSentenceLength)
+        sampleLoss = BiDAFTrainer.step(instances, config, config.is_train)
         loss += sampleLoss
         numOfBatch += 1
         numOfSamples+=len(instances)

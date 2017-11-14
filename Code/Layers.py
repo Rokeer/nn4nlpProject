@@ -87,19 +87,19 @@ class Outputs(nn.Module):
 # u is query vector with length j
 
 class attentionLayer(nn.Module):
-    def __init__(self, contextLength, numofSentences, QueryLength, embedSize):
+    def __init__(self, embedSize):
         super(attentionLayer, self).__init__()
 
         self.S_weightVector = torch.nn.Linear(6 * embedSize, 1)
-        self.sentenceLength = contextLength # sentence length in context
-        self.num_sentences = numofSentences # number of sentences in context
-        self.questionLength = QueryLength # question length
+        # self.sentenceLength = contextLength # sentence length in context
+        # self.num_sentences = numofSentences # number of sentences in context
+        # self.questionLength = QueryLength # question length
 
-    def forward(self, h_vector, u_vector, is_train):
+    def forward(self, h_vector, u_vector, is_train, config):
         # Add new dimension and repeat h vector multiple times in that dimension to ease the multiplication with the query.
-        h_vector_expanded = h_vector.unsqueeze(3).repeat(1, 1, 1, self.questionLength, 1)
+        h_vector_expanded = h_vector.unsqueeze(3).repeat(1, 1, 1, config.MaxQuestionLength, 1)
         # Add two dimensions one for sentences and one sentence length and repeat u vector multiple times in these dimension.
-        u_vector_expanded = u_vector.unsqueeze(1).unsqueeze(1).repeat(1, self.num_sentences, self.sentenceLength, 1, 1)
+        u_vector_expanded = u_vector.unsqueeze(1).unsqueeze(1).repeat(1, config.MaxNumberOfSentences, config.MaxSentenceLength, 1, 1)
 
         h_u_mul = h_vector_expanded * u_vector_expanded
         allVectors = [h_vector_expanded, u_vector_expanded, h_u_mul]
@@ -121,7 +121,7 @@ class attentionLayer(nn.Module):
         flat_out = F.softmax(flat_max_sValues)
         out = reconstruct(flat_out, max_sValues, 1)
         h_vector_attention = out.unsqueeze(len(out.size())).mul(h_vector).sum(len(h_vector.size()) - 2)
-        h_vector_attention = h_vector_attention.unsqueeze(2).repeat(1, 1, self.sentenceLength, 1)
+        h_vector_attention = h_vector_attention.unsqueeze(2).repeat(1, 1, config.MaxSentenceLength, 1)
 
         attentionLayerOutput = torch.cat([h_vector, u_vector_attention, h_vector * u_vector_attention, h_vector * h_vector_attention], 3)
 
