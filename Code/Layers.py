@@ -58,8 +58,12 @@ class BiModeling(nn.Module):
         self.hidden_size = hidden_size
     def forward(self, inputs):
         batch_size, seq_len, feature_size = inputs.size()
-        h_0 = Variable(torch.zeros(2, batch_size, self.hidden_size), requires_grad=False)
-        c_0 = Variable(torch.zeros(2, batch_size, self.hidden_size), requires_grad=False)
+        if usecuda:
+            h_0 = Variable(torch.zeros(2, batch_size, self.hidden_size), requires_grad=False).cuda()
+            c_0 = Variable(torch.zeros(2, batch_size, self.hidden_size), requires_grad=False).cuda()
+        else:
+            h_0 = Variable(torch.zeros(2, batch_size, self.hidden_size), requires_grad=False)
+            c_0 = Variable(torch.zeros(2, batch_size, self.hidden_size), requires_grad=False)
         outputs, (h_n, c_n) = self.bilstm(inputs, (h_0, c_0))
         return outputs
 
