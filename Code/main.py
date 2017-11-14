@@ -12,6 +12,12 @@ from Model import BiDAFModel
 from trainer import Trainer
 import time
 
+if torch.cuda.is_available():
+    usecuda = True
+else:
+    usecuda = False
+usecuda = False
+
 def read_train(configuration):
     max_length = 0
     max_Query_Length = 0
@@ -47,8 +53,8 @@ def read_train(configuration):
             max_length = max(max_length, len(sent_context))
             max_Query_Length = max(max_Query_Length,len(sent_question))
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq)
-            # if lineindex >= 6200:
-            #     break
+            if lineindex >= 200:
+                break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
@@ -148,6 +154,8 @@ emb_mat = np.array([widx2vec_dict[wid] if wid in widx2vec_dict
 config.emb_mat = emb_mat
 
 BiDAF_Model = BiDAFModel(config)
+if usecuda:
+    BiDAF_Model.cuda()
 BiDAFTrainer = Trainer(config,BiDAF_Model)
 
 

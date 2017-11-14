@@ -6,6 +6,12 @@ from functools import reduce
 from operator import mul
 #import code
 
+if torch.cuda.is_available():
+    usecuda = True
+else:
+    usecuda = False
+usecuda = False
+
 def selection(target, logits):
     flat_logits = flatten(logits, 1)
     flat_out = F.softmax(flat_logits)
@@ -61,7 +67,7 @@ def linear_logits(args, is_train, dropout, linear, mask):
     out = reconstruct(flated, args[0], 1)
     output = out.squeeze(len(list(args[0].size())) - 1)
     if mask is not None:
-        if torch.cuda.is_available():
+        if usecuda:
             output = torch.add(output.data, (torch.ones(mask.size()) - mask.type(torch.cuda.FloatTensor)) * 1e30 * -1)
         else:
             output = torch.add(output.data, (torch.ones(mask.size()) - mask.type(torch.FloatTensor)) * 1e30 * -1)

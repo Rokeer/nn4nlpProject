@@ -15,6 +15,11 @@ from Layers import attentionLayer as atLayer
 from Layers import BiModeling, Outputs, selection, BiLSTM, Multi_Conv1D, Conv1D, HighwayNetwork
 from ConfigFile import Configuration
 
+if torch.cuda.is_available():
+    usecuda = True
+else:
+    usecuda = False
+usecuda = False
 
 class BiDAFModel(nn.Module):
     def __init__(self, config):
@@ -79,8 +84,17 @@ class BiDAFModel(nn.Module):
         return V
 
     def forward(self, instances, config):
-        Context_Char_Word_list = Variable(torch.zeros(len(instances), config.MaxSentenceLength, 2 * self.word_emb_size).type(torch.FloatTensor))
-        Query_Char_Word_list = Variable(torch.zeros(len(instances), self.MaxQuestionLength, 2 * self.word_emb_size).type(torch.FloatTensor))
+        if usecuda:
+            Context_Char_Word_list = Variable(
+                torch.zeros(len(instances), config.MaxSentenceLength, 2 * self.word_emb_size).type(torch.cuda.FloatTensor))
+            Query_Char_Word_list = Variable(
+                torch.zeros(len(instances), self.MaxQuestionLength, 2 * self.word_emb_size).type(torch.cuda.FloatTensor))
+        else:
+            Context_Char_Word_list = Variable(
+                torch.zeros(len(instances), config.MaxSentenceLength, 2 * self.word_emb_size).type(torch.FloatTensor))
+            Query_Char_Word_list = Variable(
+                torch.zeros(len(instances), self.MaxQuestionLength, 2 * self.word_emb_size).type(torch.FloatTensor))
+
         count = 0
         # Context_Char_Word_list = []
         # Query_Char_Word_list = []
@@ -97,9 +111,16 @@ class BiDAFModel(nn.Module):
                 ContextChar = self.padVectors(ContextChar, config.MaxSentenceLength, self.max_word_size)
                 QueryChar = self.padVectors(QueryChar, self.MaxQuestionLength, self.max_word_size)
 
-                ContextChar_beforeCNN = self.char_embed(Variable(LongTensor(ContextChar)))
+                if usecuda:
+                    ContextChar_beforeCNN = self.char_embed(Variable(torch.cuda.LongTensor(ContextChar)))
+                else:
+                    ContextChar_beforeCNN = self.char_embed(Variable(LongTensor(ContextChar)))
+
                 ContextChar_beforeCNN = ContextChar_beforeCNN.unsqueeze(0)
-                QueryChar_beforeCNN = self.char_embed(Variable(LongTensor(QueryChar)))
+                if usecuda:
+                    QueryChar_beforeCNN = self.char_embed(Variable(torch.cuda.LongTensor(QueryChar)))
+                else:
+                    QueryChar_beforeCNN = self.char_embed(Variable(LongTensor(QueryChar)))
                 QueryChar_beforeCNN = QueryChar_beforeCNN.unsqueeze(0)
 
                 ContextChar_CNN = self.cnn_x(ContextChar_beforeCNN, self.filter_sizes, self.heights, self.padding)
@@ -116,8 +137,12 @@ class BiDAFModel(nn.Module):
             ContextWord = np.array(self.padVectors(ContextWord, config.MaxSentenceLength, self.word_emb_size))
             QueryWord = np.array(self.padVectors(QueryWord, self.MaxQuestionLength, self.word_emb_size))
 
-            ContextWord_tensor = Variable(FloatTensor([ContextWord]))
-            QueryWord_tensor = Variable(FloatTensor([QueryWord]))
+            if usecuda:
+                ContextWord_tensor = Variable(torch.cuda.FloatTensor([ContextWord]))
+                QueryWord_tensor = Variable(torch.cuda.FloatTensor([QueryWord]))
+            else:
+                ContextWord_tensor = Variable(FloatTensor([ContextWord]))
+                QueryWord_tensor = Variable(FloatTensor([QueryWord]))
 
             #print(Ax_tensor.size())
             #print(Aq_tensor.size())
