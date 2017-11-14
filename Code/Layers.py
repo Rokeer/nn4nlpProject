@@ -151,7 +151,7 @@ class HighwayLayer(nn.Module):
 
     def getLinearTransofrmation(self, input, linearModel, is_train):
         if linearModel == 'Linear':
-            flat_vectors = [F.dropout(flatten(arg, 1), training=is_train) for arg in input]
+            flat_vectors = [F.dropout(flatten(arg, 1), training=is_train) for arg in input].cuda()
             flat_outs = self.LinearTransform(torch.cat(flat_vectors, 1))
             out = reconstruct(flat_outs, input[0], 1)
             finalValue = out.squeeze(len(list(input[0].size())) - 1)
@@ -249,7 +249,8 @@ class Multi_Conv1D(nn.Module):
             variables by passing data through the same layers.
             '''
             conv1d = Conv1D(in_channels, out_channels, filter_height, filter_width,is_train=self.is_train, keep_prob=self.cnn_dropout_keep_prob, padding=padding)
-            conv1d = conv1d.cuda()
+            if (usecuda):
+                conv1d = conv1d.cuda()
             out = conv1d(inputs)
             outs.append(out)
 
