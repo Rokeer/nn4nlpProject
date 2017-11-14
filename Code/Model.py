@@ -52,6 +52,11 @@ class BiDAFModel(nn.Module):
 
         self.lstm_x = BiModeling(self.input_size, self.hidden_size, self.lstm_layers)
         self.lstm_q = BiModeling(self.input_size, self.hidden_size, self.lstm_layers)
+
+        if usecuda:
+            self.lstm_x = self.lstm_x.cuda()
+            self.lstm_q = self.lstm_q.cuda()
+
         if self.use_char_emb:
             self.filter_sizes = [100]
             self.heights = [5]
