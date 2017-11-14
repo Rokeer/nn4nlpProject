@@ -31,14 +31,16 @@ def ConvertJSON(InputPath, OutputPath):
                     #
                     # charIndex = int(answerEnd)
                     # wordIndexEnd = convertCharPositionToWordPosition(context,charIndex)
-
+                    if qID == '5726a975708984140094cd38':
+                        print(qID)
                     wordIndexStart, wordIndexEnd = findWordPosition(context, answerIndex, answertext)
                     # print(wordIndexStart)
                     # print(wordIndexEnd)
+
                     if wordIndexStart < 0:
                         wordIndexStart = 0
                     if wordIndexEnd >= len(context.split()):
-                        wordIndexStart = len(context.split())-1
+                        wordIndexEnd = len(context.split())-1
 
                     currentLine = qID + '\t' + context+ '\t' + question + '\t' + answertext + '\t' + str(wordIndexStart) + '\t' + str(wordIndexEnd) +'\n'
                     if currentLine != oldLine:

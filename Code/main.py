@@ -11,7 +11,7 @@ from ConfigFile import Configuration
 from Model import BiDAFModel
 from trainer import Trainer
 import time
-# import pdb
+import pdb
 
 if torch.cuda.is_available():
     usecuda = True
@@ -23,7 +23,7 @@ def read_train(configuration):
     max_length = 0
     max_Query_Length = 0
     lineindex = 0
-    with open(config.train_src_file, "r") as f_src:
+    with open(config.train_src_file, "r", encoding='utf-8') as f_src:
         for line_src in f_src:
             cx = []
             cq = []
@@ -32,7 +32,8 @@ def read_train(configuration):
                 continue
             lineindex+=1
             [ID, context, question, answer, start, end] = line_src.split('\t')
-
+            # if ID != '5726a975708984140094cd38':
+            #     continue
             sent_context = [w2i[x] for x in context.strip().split()]
             for w in context.strip().split():
                 for c in w:
@@ -59,6 +60,8 @@ def read_train(configuration):
             except ValueError:
                 # pdb.set_trace()
                 print("Failure w/ value " + ID)
+            if int(end) >= len(sent_context):
+                print ("Wrong:" + ID)
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq)
             # if lineindex >= 200:
             #     break
