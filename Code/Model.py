@@ -163,7 +163,7 @@ class BiDAFModel(nn.Module):
         # Query_Char_Word = Variable(LongTensor(Query_Char_Word_list))
         Context_Char_Word = self.hw_1(Context_Char_Word_list, self.is_train)
         Query_Char_Word = self.hw_1(Query_Char_Word_list, self.is_train)
-        print (Context_Char_Word.data.iscuda())
+        print (Context_Char_Word.data.is_cuda())
         h = self.lstm_x(Context_Char_Word)# add dimension for batch
         h = h.unsqueeze(1)
         u = self.lstm_q(Query_Char_Word)
