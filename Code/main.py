@@ -17,14 +17,14 @@ if torch.cuda.is_available():
     usecuda = True
 else:
     usecuda = False
-# usecuda = False
+usecuda = False
 
 def read_train(configuration):
     max_length = 0
     max_Query_Length = 0
     lineindex = 0
-    # , encoding='utf-8'
-    with open(config.train_src_file, "r") as f_src:
+    #
+    with open(config.train_src_file, "r" , encoding='utf-8') as f_src:
 
         for line_src in f_src:
             cx = []
@@ -65,8 +65,8 @@ def read_train(configuration):
             if int(end) >= len(sent_context):
                 print ("Wrong:" + ID)
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq)
-            if lineindex >= 200:
-                break
+            # if lineindex >= 200:
+            #     break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
@@ -179,7 +179,7 @@ for epoch in range(0, config.EPOCHS):
     start = time.time()
     # for instance in train:
     print("Start Training:" + str(epoch))
-    for sid in range(7560, len(train), config.BatchSize):
+    for sid in range(0, len(train), config.BatchSize):
         instances = train[sid:sid + config.BatchSize]
         config.MaxSentenceLength = len(instances[len(instances)-1][0])
         # print(config.MaxSentenceLength)
