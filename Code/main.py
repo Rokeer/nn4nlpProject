@@ -17,7 +17,7 @@ if torch.cuda.is_available():
     usecuda = True
 else:
     usecuda = False
-usecuda = False
+# usecuda = False
 
 def read_train(configuration):
     max_length = 0

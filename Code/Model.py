@@ -19,7 +19,7 @@ if torch.cuda.is_available():
     usecuda = True
 else:
     usecuda = False
-usecuda = False
+# usecuda = False
 
 class BiDAFModel(nn.Module):
     def __init__(self, config):

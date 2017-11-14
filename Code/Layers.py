@@ -10,7 +10,7 @@ if torch.cuda.is_available():
     usecuda = True
 else:
     usecuda = False
-usecuda = False
+# usecuda = False
 
 def selection(target, logits):
     flat_logits = flatten(logits, 1)
