@@ -63,8 +63,8 @@ def read_train(configuration):
             if int(end) >= len(sent_context):
                 print ("Wrong:" + ID)
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq)
-            # if lineindex >= 200:
-            #     break
+            if lineindex >= 200:
+                break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
