@@ -145,8 +145,11 @@ class HighwayLayer(nn.Module):
 
         self.reluNonlinearity = torch.nn.ReLU(inplace=True)
         self.sigmoidNonlinearity = F.sigmoid
-        self.LinearTransform = torch.nn.Linear(size, size).cuda()
+        self.LinearTransform = torch.nn.Linear(size, size)
         self.gate_LinearTransform = torch.nn.Linear(size, size)
+        if usecuda:
+            self.LinearTransform = self.LinearTransform.cuda()
+            self.gate_LinearTransform = self.gate_LinearTransform.cuda()
         # self.gate_lin.bias.data.fill_(bias_init)
 
     def getLinearTransofrmation(self, input, linearModel, is_train):
