@@ -26,11 +26,19 @@ def ConvertJSON(InputPath, OutputPath):
                     answerIndex = str(answer["answer_start"]).replace('\n','').replace('\r','').replace("\t"," ").strip()
                     answerEnd = str(answer["answer_start"] + (len(answertext) - 1)).replace('\n','').replace('\r','').replace("\t"," ").strip()
 
-                    charIndex = int(answerIndex)
-                    wordIndexStart = convertCharPositionToWordPosition(context,charIndex)
+                    # charIndex = int(answerIndex)
+                    # wordIndexStart = convertCharPositionToWordPosition(context,charIndex)
+                    #
+                    # charIndex = int(answerEnd)
+                    # wordIndexEnd = convertCharPositionToWordPosition(context,charIndex)
 
-                    charIndex = int(answerEnd)
-                    wordIndexEnd = convertCharPositionToWordPosition(context,charIndex)
+                    wordIndexStart, wordIndexEnd = findWordPosition(context, answerIndex, answertext)
+                    # print(wordIndexStart)
+                    # print(wordIndexEnd)
+                    if wordIndexStart < 0:
+                        wordIndexStart = 0
+                    if wordIndexEnd >= len(context.split()):
+                        wordIndexStart = len(context.split())-1
 
                     currentLine = qID + '\t' + context+ '\t' + question + '\t' + answertext + '\t' + str(wordIndexStart) + '\t' + str(wordIndexEnd) +'\n'
                     if currentLine != oldLine:
@@ -40,6 +48,14 @@ def ConvertJSON(InputPath, OutputPath):
     writeDataOnLines.close()
     print('Done')
 
+def findWordPosition(text, answerIndex, answertext):
+    before = text[0:int(answerIndex)]
+    if(len(before) > 0 and before[-1] != ' '):
+        start = len(before.split())-1
+    else:
+        start = len(before.split())
+    end = start + len(answertext.split()) - 1
+    return start, end
 
 def convertCharPositionToWordPosition(text, charPosition):
     allWords = text.split()
