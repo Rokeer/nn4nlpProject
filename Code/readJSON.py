@@ -55,6 +55,7 @@ def convertCharPositionToWordPosition(text, charPosition):
             return wordIndex
         else:
             wordIndex += 1
+    return len(allWords) - 1
 
 ConvertJSON(trainInput, trainOutput)
 ConvertJSON(devInput, devoutput)

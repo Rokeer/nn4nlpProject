@@ -11,6 +11,7 @@ from ConfigFile import Configuration
 from Model import BiDAFModel
 from trainer import Trainer
 import time
+# import pdb
 
 if torch.cuda.is_available():
     usecuda = True
@@ -52,6 +53,12 @@ def read_train(configuration):
                     char_counter[c] += 1
             max_length = max(max_length, len(sent_context))
             max_Query_Length = max(max_Query_Length,len(sent_question))
+            try:
+                int_val = int(start)
+                int_val = int(end)
+            except ValueError:
+                # pdb.set_trace()
+                print("Failure w/ value " + ID)
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq)
             # if lineindex >= 200:
             #     break
