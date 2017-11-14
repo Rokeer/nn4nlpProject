@@ -151,8 +151,8 @@ class HighwayLayer(nn.Module):
 
     def getLinearTransofrmation(self, input, linearModel, is_train):
         if linearModel == 'Linear':
-            flat_vectors = [F.dropout(flatten(arg, 1), training=is_train) for arg in input].cuda()
-            flat_outs = self.LinearTransform(torch.cat(flat_vectors, 1))
+            flat_vectors = [F.dropout(flatten(arg, 1), training=is_train) for arg in input]
+            flat_outs = self.LinearTransform(torch.cat(flat_vectors, 1).cuda())
             out = reconstruct(flat_outs, input[0], 1)
             finalValue = out.squeeze(len(list(input[0].size())) - 1)
             return finalValue
