@@ -249,6 +249,7 @@ class Multi_Conv1D(nn.Module):
             variables by passing data through the same layers.
             '''
             conv1d = Conv1D(in_channels, out_channels, filter_height, filter_width,is_train=self.is_train, keep_prob=self.cnn_dropout_keep_prob, padding=padding)
+            conv1d = conv1d.cuda()
             out = conv1d(inputs)
             outs.append(out)
 
