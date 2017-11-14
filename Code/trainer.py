@@ -10,7 +10,11 @@ from torch import LongTensor, FloatTensor
 from torch.autograd import Variable
 # import pdb
 
-
+if torch.cuda.is_available():
+    usecuda = True
+else:
+    usecuda = False
+# usecuda = False
 class Trainer(object):
     def __init__(self, config, model):
         # assert isinstance(model, Model)
@@ -23,10 +27,16 @@ class Trainer(object):
         # get input Sample
         m_start, m_end, start_Logits, end_logits = self.model.forward(instances, config)
         # pdb.set_trace()
-        startVlas = Variable(torch.LongTensor([int(i[6]) for i in instances]))
+        if usecuda:
+            startVlas = Variable(torch.cuda.LongTensor([int(i[6]) for i in instances]))
+        else:
+            startVlas = Variable(torch.LongTensor([int(i[6]) for i in instances]))
         # pdb.set_trace()
         startLoss = self.model.getLoss(start_Logits, startVlas)
-        endVlas = Variable(torch.LongTensor([int(i[7]) for i in instances]))
+        if usecuda:
+            endVlas = Variable(torch.cuda.LongTensor([int(i[7]) for i in instances]))
+        else:
+            endVlas = Variable(torch.LongTensor([int(i[7]) for i in instances]))
         endLoss = self.model.getLoss(end_logits, endVlas)
         self.optimizer.zero_grad()
         Finalloss = startLoss + endLoss#.backward()
