@@ -12,12 +12,15 @@ def ConvertJSON(InputPath, OutputPath):
         data = json.load(data_file)
     writeDataOnLines = codecs.open(OutputPath,'w','utf-8')
     oldLine = ''
+    counter = 0
     for topic in data["data"]:
         for paragraph in topic["paragraphs"]:
             context = paragraph["context"].replace('\n','').replace('\r','').replace("\t"," ").strip()
             for questionAnswer in paragraph["qas"]:
                 question = questionAnswer["question"].replace('\n','').replace('\r','').replace("\t"," ").strip()
                 qID = str(questionAnswer["id"]).replace('\n','').replace('\r','').replace("\t"," ").strip()
+                # if(qID == '56cf7c634df3c31400b0d840'):
+                #     print ("hahahah")
                 for answer in questionAnswer["answers"]:
                     answertext = answer["text"].replace('\n','').replace('\r','').replace("\t"," ").strip()
                     answerIndex = str(answer["answer_start"]).replace('\n','').replace('\r','').replace("\t"," ").strip()
@@ -39,7 +42,7 @@ def ConvertJSON(InputPath, OutputPath):
 
 
 def convertCharPositionToWordPosition(text, charPosition):
-    allWords = text.split(' ')
+    allWords = text.split()
     characterCounter = 0
     wordIndex = 0
     for i in range(len(allWords)):

@@ -8,7 +8,7 @@ import numpy as np
 import random
 from torch import LongTensor, FloatTensor
 from torch.autograd import Variable
-import pdb
+# import pdb
 
 class Trainer(object):
     def __init__(self, config, model):
@@ -21,9 +21,9 @@ class Trainer(object):
         # config = self.config
         # get input Sample
         m_start, m_end, start_Logits, end_logits = self.model.forward(instances, config)
-        pdb.set_trace()
+        # pdb.set_trace()
         startVlas = Variable(torch.LongTensor([int(i[6]) for i in instances]))
-        pdb.set_trace()
+        # pdb.set_trace()
         startLoss = self.model.getLoss(start_Logits, startVlas)
         endVlas = Variable(torch.LongTensor([int(i[7]) for i in instances]))
         endLoss = self.model.getLoss(end_logits, endVlas)
