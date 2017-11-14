@@ -23,7 +23,9 @@ def read_train(configuration):
     max_length = 0
     max_Query_Length = 0
     lineindex = 0
-    with open(config.train_src_file, "r", encoding='utf-8') as f_src:
+    # , encoding='utf-8'
+    with open(config.train_src_file, "r") as f_src:
+
         for line_src in f_src:
             cx = []
             cq = []
