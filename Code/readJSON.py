@@ -47,6 +47,8 @@ def convertCharPositionToWordPosition(text, charPosition):
             characterCounter +=1
         characterCounter +=1
         if characterCounter > charPosition:
+            if wordIndex >= len(allWords):
+                wordIndex = len(allWords) - 1
             return wordIndex
         else:
             wordIndex += 1
