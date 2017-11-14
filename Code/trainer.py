@@ -10,6 +10,7 @@ from torch import LongTensor, FloatTensor
 from torch.autograd import Variable
 # import pdb
 
+
 class Trainer(object):
     def __init__(self, config, model):
         # assert isinstance(model, Model)
