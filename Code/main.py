@@ -174,7 +174,7 @@ for epoch in range(0, config.EPOCHS):
     start = time.time()
     # for instance in train:
     print("Start Training:" + str(epoch))
-    for sid in range(0, len(train), config.BatchSize):
+    for sid in range(7560, len(train), config.BatchSize):
         instances = train[sid:sid + config.BatchSize]
         config.MaxSentenceLength = len(instances[len(instances)-1][0])
         # print(config.MaxSentenceLength)
