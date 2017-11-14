@@ -133,7 +133,7 @@ c2i = defaultdict(lambda: unk_char_src, c2i)
 train = list(read_train(config))
 train.sort(key=lambda x: len(x[0]))
 
-train = train[0:0 + config.BatchSize]
+# train = train[0:0 + config.BatchSize]
 print(str(config.MaxSentenceLength))
 unk_src = w2i["<unk>"]
 w2i = defaultdict(lambda: unk_src, w2i)
