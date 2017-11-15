@@ -18,7 +18,7 @@ if torch.cuda.is_available():
 else:
     usecuda = False
 # usecuda = False
-reverse = False
+reverse = True
 if usecuda:
     print("Using Cuda")
 
@@ -186,8 +186,11 @@ for epoch in range(0, config.EPOCHS):
     start = time.time()
     # for instance in train:
     print("Start Training:" + str(epoch))
-    for sid in range(0, len(train), config.BatchSize):
+    for sid in range(33000, len(train), config.BatchSize):
         instances = train[sid:sid + config.BatchSize]
+        print (instances[0][3])
+        print (instances[0][5])
+        print (instances[0][4])
         if reverse:
             config.MaxSentenceLength = len(instances[0][0])
         else:
@@ -197,8 +200,7 @@ for epoch in range(0, config.EPOCHS):
         loss += sampleLoss
         numOfBatch += 1
         numOfSamples+=len(instances)
-        if numOfBatch%100 == 0:
-
+        if numOfBatch%1 == 0:
             end = time.time()
             print (str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : " + str(
                 loss / numOfSamples)+", run time = " + str(end - start))
