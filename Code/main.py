@@ -18,6 +18,7 @@ if torch.cuda.is_available():
 else:
     usecuda = False
 # usecuda = False
+reverse = True
 
 def read_train(configuration):
     max_length = 0
@@ -150,7 +151,10 @@ unk_char_src = c2i["<unk>"]
 c2i = defaultdict(lambda: unk_char_src, c2i)
 
 train = list(read_train(config))
-train.sort(key=lambda x: len(x[0]))
+if reverse:
+    train.sort(key=lambda x: len(x[0]), reverse=reverse)
+else:
+    train.sort(key=lambda x: len(x[0]))
 
 # train = train[0:0 + config.BatchSize]
 print(str(config.MaxSentenceLength))
@@ -183,7 +187,10 @@ for epoch in range(0, config.EPOCHS):
     print("Start Training:" + str(epoch))
     for sid in range(0, len(train), config.BatchSize):
         instances = train[sid:sid + config.BatchSize]
-        config.MaxSentenceLength = len(instances[len(instances)-1][0])
+        if reverse:
+            config.MaxSentenceLength = len(instances[0][0])
+        else:
+            config.MaxSentenceLength = len(instances[len(instances)-1][0])
         # print(config.MaxSentenceLength)
         sampleLoss = BiDAFTrainer.step(instances, config, config.is_train)
         loss += sampleLoss
