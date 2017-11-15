@@ -113,8 +113,8 @@ class BiDAFModel(nn.Module):
                 ContextChar = instance[8]
                 QueryChar = instance[9]
 
-                ContextChar = self.padVectors(ContextChar, config.MaxSentenceLength, self.max_word_size)
-                QueryChar = self.padVectors(QueryChar, self.MaxQuestionLength, self.max_word_size)
+                #ContextChar = self.padVectors(ContextChar, config.MaxSentenceLength, self.max_word_size)
+                #QueryChar = self.padVectors(QueryChar, self.MaxQuestionLength, self.max_word_size)
 
                 if usecuda:
                     ContextChar_beforeCNN = self.char_embed(Variable(torch.cuda.LongTensor(ContextChar)))
@@ -133,6 +133,17 @@ class BiDAFModel(nn.Module):
 
                 ContextChar_CNN = ContextChar_CNN.permute(0, 2, 1)
                 QueryChar_CNN = QueryChar_CNN.permute(0, 2, 1)
+
+
+            length =  config.MaxSentenceLength - ContextChar_CNN.size()[1]
+            if length > 0:
+                ContextCharPadding = torch.FloatTensor(length, self.word_emb_size).zero_().unsqueeze(0)
+                ContextChar_CNN = torch.cat((ContextChar_CNN, ContextCharPadding), 1)
+
+            length = config.MaxQuestionLength - QueryChar_CNN.size()[1]
+            if length > 0:
+                QueryCharPadding = torch.FloatTensor(length, self.word_emb_size).zero_().unsqueeze(0)
+                QueryChar_CNN = torch.cat((QueryChar_CNN, QueryCharPadding), 1)
 
             #print(Cx.size())
             #print(Cq.size())
