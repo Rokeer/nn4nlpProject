@@ -189,7 +189,41 @@ if usecuda:
 BiDAFTrainer = Trainer(config,BiDAF_Model)
 
 
+
 for epoch in range(0, config.EPOCHS):
+
+    # Start Dev
+
+    if epoch % 6 == 0:
+        config.is_train = False
+        loss = 0
+        numOfSamples = 0
+        numOfBatch = 0
+        start = time.time()
+        print("Start Dev:")
+        for sid in range(0, len(dev), config.DevBatchSize):
+            instances = dev[sid:sid + config.DevBatchSize]
+            if reverse:
+                config.MaxSentenceLength = len(instances[0][0])
+            else:
+                config.MaxSentenceLength = len(instances[len(instances) - 1][0])
+            # print(config.MaxSentenceLength)
+            sampleLoss = BiDAFTrainer.step(instances, config, config.is_train)
+            loss += sampleLoss
+            numOfBatch += 1
+            numOfSamples += len(instances)
+            if numOfSamples % 1000 == 0:
+                end = time.time()
+                print("Dev: " + str(numOfSamples) + ' / ' + str(len(dev)) + " , Current loss : " + str(
+                    loss / numOfSamples) + ", run time = " + str(end - start))
+                start = time.time()
+                # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
+                #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
+
+        loss /= len(train)
+        print('Dev Loss: ' + str(loss))
+
+
     config.is_train = True
     loss = 0
     # need to implement BATCH
@@ -221,36 +255,7 @@ for epoch in range(0, config.EPOCHS):
     print(str(loss))
     torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'.pkl')
 
-    #Start Dev
 
-    if epoch % 5 ==0:
-        config.is_train = False
-        loss = 0
-        numOfSamples = 0
-        numOfBatch = 0
-        start = time.time()
-        print("Start Dev:")
-        for sid in range(0, len(dev), config.DevBatchSize):
-            instances = dev[sid:sid + config.DevBatchSize]
-            if reverse:
-                config.MaxSentenceLength = len(instances[0][0])
-            else:
-                config.MaxSentenceLength = len(instances[len(instances) - 1][0])
-            # print(config.MaxSentenceLength)
-            sampleLoss = BiDAFTrainer.step(instances, config, config.is_train)
-            loss += sampleLoss
-            numOfBatch += 1
-            numOfSamples += len(instances)
-            if numOfSamples % 1000 == 0:
-                end = time.time()
-                print("Dev: " + str(numOfSamples) + ' / ' + str(len(dev)) + " , Current loss : " + str(
-                    loss / numOfSamples) + ", run time = " + str(end - start))
-                start = time.time()
-                # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
-                #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
-
-        loss /= len(train)
-        print('Dev Loss: ' + str(loss))
 
 
 
