@@ -78,40 +78,96 @@ def read_train(configuration):
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
-def read_dev(fname_src):
-    #global max_length
+
+def read_dev(configuration):
+    #max_length = 0
+    #max_Query_Length = 0
     lineindex = 0
-    question = context = ''
-    answers, sent_answers, sent_context, sent_question = ([] for i in range(4))
-    with open(fname_src, "r") as f_src:
+    # , encoding='utf-8'
+    with open(config.dev_src_file, "r") as f_src:
+
         for line_src in f_src:
-            line_src = line_src.replace('\n', '').replace('\r', '').strip()
+            cx = []
+            cq = []
+            line_src = line_src.decode("utf-8")
+            line_src = line_src.replace('\n','').replace('\r','').strip()
             if line_src == "":
                 continue
-            lineindex += 1
-            if context == line_src.split('\t')[1] and question == line_src.split('\t')[2]:
-                answer = line_src.split('\t')[3]
-                answers.append(answer)
-                sent_answers.append([w2i[x] for x in answer.strip().split()])
-            else:
-                if context != '' or question != '':
-                    yield (sent_context, sent_question, sent_answers, context, question, answers, start, end)
-                context = line_src.split('\t')[1]
-                #max_length = max(max_length, len(context))
+            lineindex+=1
+            [ID, context, question, answer, start, end] = line_src.split('\t')
+            # if ID != '5726a975708984140094cd38':
+            #     continue
+            sent_context = [w2i[x] for x in context.strip().split()]
+            for w in context.strip().split():
+                for c in w:
+                    char_counter[c] += 1
+                cxi = [c2i[c] for c in list(w)]
+                cx.append((cxi + config.max_word_size * [0])[:config.max_word_size])
 
-                question = line_src.split('\t')[2]
-                start = int(line_src.split('\t')[4])
-                end = int(line_src.split('\t')[5])
-                sent_context = [w2i[x] for x in context.strip().split()]
-                sent_question = [w2i[x] for x in question.strip().split()]
-                answers = []
-                sent_answers = []
+            sent_answers = [w2i[x] for x in answer.strip().split()]
+            for w in answer.strip().split():
+                for c in w:
+                    char_counter[c] += 1
 
-                answer = line_src.split('\t')[3]
-                answers.append(answer)
-                sent_answers.append([w2i[x] for x in answer.strip().split()])
-                #if lineindex >= 100:
-                #    break
+
+            sent_question = [w2i[x] for x in question.strip().split()]
+            for q in question.strip().split():
+                for c in q:
+                    char_counter[c] += 1
+                cqi = [c2i[c] for c in list(w)]
+                cq.append((cqi + config.max_word_size * [0])[:config.max_word_size])
+            #max_length = max(max_length, len(sent_context))
+            #max_Query_Length = max(max_Query_Length,len(sent_question))
+            try:
+                int_val = int(start)
+                int_val = int(end)
+            except ValueError:
+                # pdb.set_trace()
+                print("Failure w/ value " + ID)
+            if int(end) >= len(sent_context):
+                print ("Wrong:" + ID)
+            if ID == '56cec3e8aab44d1400b88a02':
+                continue
+            yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
+            #if lineindex >= 200:
+            #    break
+    #config.MaxSentenceLength = max_length
+    #config.MaxQuestionLength = max_Query_Length
+
+# def read_dev(fname_src):
+#     #global max_length
+#     lineindex = 0
+#     question = context = ''
+#     answers, sent_answers, sent_context, sent_question = ([] for i in range(4))
+#     with open(fname_src, "r") as f_src:
+#         for line_src in f_src:
+#             line_src = line_src.replace('\n', '').replace('\r', '').strip()
+#             if line_src == "":
+#                 continue
+#             lineindex += 1
+#             if context == line_src.split('\t')[1] and question == line_src.split('\t')[2]:
+#                 answer = line_src.split('\t')[3]
+#                 answers.append(answer)
+#                 sent_answers.append([w2i[x] for x in answer.strip().split()])
+#             else:
+#                 if context != '' or question != '':
+#                     yield (sent_context, sent_question, sent_answers, context, question, answers, start, end)
+#                 context = line_src.split('\t')[1]
+#                 #max_length = max(max_length, len(context))
+#
+#                 question = line_src.split('\t')[2]
+#                 start = int(line_src.split('\t')[4])
+#                 end = int(line_src.split('\t')[5])
+#                 sent_context = [w2i[x] for x in context.strip().split()]
+#                 sent_question = [w2i[x] for x in question.strip().split()]
+#                 answers = []
+#                 sent_answers = []
+#
+#                 answer = line_src.split('\t')[3]
+#                 answers.append(answer)
+#                 sent_answers.append([w2i[x] for x in answer.strip().split()])
+#                 #if lineindex >= 100:
+#                 #    break
 
 # This function uses the global w2i dictionary and gets the glove vector for each word as a dictionary
 def get_GLOVE_word2vec(glove_path, word_emb_size):
