@@ -25,3 +25,4 @@ class Configuration():
         self.is_train = True
         self.emb_mat = None
         self.init_learningRate = 0.5
+        self.DevBatchSize = 1

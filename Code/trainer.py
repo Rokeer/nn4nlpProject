@@ -40,6 +40,7 @@ class Trainer(object):
         endLoss = self.model.getLoss(end_logits, endVlas)
         self.optimizer.zero_grad()
         Finalloss = startLoss + endLoss#.backward()
-        Finalloss.backward()
-        self.optimizer.step()
+        if config.is_train == True:
+            Finalloss.backward()
+            self.optimizer.step()
         return Finalloss.data[0]

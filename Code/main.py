@@ -167,6 +167,10 @@ unk_src = w2i["<unk>"]
 w2i = defaultdict(lambda: unk_src, w2i)
 word_vocab_size = len(w2i)
 dev = list(read_dev(config.dev_src_file))
+if reverse:
+    dev.sort(key=lambda x: len(x[0]), reverse=reverse)
+else:
+    dev.sort(key=lambda x: len(x[0]))
 
 word2vec_dict = get_GLOVE_word2vec(config.glove_path, config.GloveEmbeddingSize)
 widx2vec_dict = {w2i[word]: vec for word, vec in word2vec_dict.items() if word in w2i}
@@ -186,6 +190,7 @@ BiDAFTrainer = Trainer(config,BiDAF_Model)
 
 
 for epoch in range(0, config.EPOCHS):
+    config.is_train = True
     loss = 0
     # need to implement BATCH
     numOfSamples = 0
@@ -213,8 +218,46 @@ for epoch in range(0, config.EPOCHS):
             #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
 
     loss /= len(train)
-    print(loss)
+    print(str(loss))
     torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'.pkl')
+
+    #Start Dev
+
+    if epoch % 5 ==0:
+        config.is_train = False
+        loss = 0
+        numOfSamples = 0
+        numOfBatch = 0
+        start = time.time()
+        print("Start Dev:")
+        for sid in range(0, len(dev), config.DevBatchSize):
+            instances = dev[sid:sid + config.DevBatchSize]
+            if reverse:
+                config.MaxSentenceLength = len(instances[0][0])
+            else:
+                config.MaxSentenceLength = len(instances[len(instances) - 1][0])
+            # print(config.MaxSentenceLength)
+            sampleLoss = BiDAFTrainer.step(instances, config, config.is_train)
+            loss += sampleLoss
+            numOfBatch += 1
+            numOfSamples += len(instances)
+            if numOfSamples % 1000 == 0:
+                end = time.time()
+                print("Dev: " + str(numOfSamples) + ' / ' + str(len(dev)) + " , Current loss : " + str(
+                    loss / numOfSamples) + ", run time = " + str(end - start))
+                start = time.time()
+                # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
+                #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
+
+        loss /= len(train)
+        print('Dev Loss: ' + str(loss))
+
+
+
+
+
+
+
 
 ''' Don't touch anything below this line '''
 '''
