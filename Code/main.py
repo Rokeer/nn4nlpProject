@@ -24,11 +24,12 @@ def read_train(configuration):
     max_Query_Length = 0
     lineindex = 0
     # , encoding='utf-8'
-    with open(config.train_src_file, "r", encoding='utf-8') as f_src:
+    with open(config.train_src_file, "r") as f_src:
 
         for line_src in f_src:
             cx = []
             cq = []
+            line_src = line_src.decode("utf-8")
             line_src = line_src.replace('\n','').replace('\r','').strip()
             if line_src == "":
                 continue
