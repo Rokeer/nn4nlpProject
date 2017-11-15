@@ -73,8 +73,8 @@ def read_train(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            if lineindex >= 200:
-                break
+            #if lineindex >= 200:
+            #    break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
@@ -110,8 +110,8 @@ def read_dev(fname_src):
                 answer = line_src.split('\t')[3]
                 answers.append(answer)
                 sent_answers.append([w2i[x] for x in answer.strip().split()])
-                if lineindex >= 100:
-                    break
+                #if lineindex >= 100:
+                #    break
 
 # This function uses the global w2i dictionary and gets the glove vector for each word as a dictionary
 def get_GLOVE_word2vec(glove_path, word_emb_size):
