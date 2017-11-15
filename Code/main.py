@@ -150,7 +150,7 @@ def timeSince(since, percent):
 
 config = Configuration()
 w2i = defaultdict(lambda: len(w2i))
-c2i = defaultdict(lambda: len(c2i)+1)
+c2i = defaultdict(lambda: len(c2i) + 1)
 char_counter = Counter()
 
 
