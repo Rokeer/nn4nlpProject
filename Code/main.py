@@ -19,6 +19,8 @@ else:
     usecuda = False
 # usecuda = False
 reverse = True
+if usecuda:
+    print("Using Cuda")
 
 def read_train(configuration):
     max_length = 0
@@ -172,7 +174,6 @@ config.emb_mat = emb_mat
 
 BiDAF_Model = BiDAFModel(config)
 if usecuda:
-    print("Using Cuda")
     BiDAF_Model.cuda()
 BiDAFTrainer = Trainer(config,BiDAF_Model)
 
