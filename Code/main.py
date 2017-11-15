@@ -11,6 +11,7 @@ from ConfigFile import Configuration
 from Model import BiDAFModel
 from trainer import Trainer
 import time
+import os
 import pdb
 
 if torch.cuda.is_available():
@@ -18,7 +19,7 @@ if torch.cuda.is_available():
 else:
     usecuda = False
 # usecuda = False
-reverse = True
+reverse = False
 if usecuda:
     print("Using Cuda")
 
@@ -71,8 +72,8 @@ def read_train(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            # if lineindex >= 200:
-            #     break
+            if lineindex >= 200:
+                break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
@@ -175,8 +176,12 @@ emb_mat = np.array([widx2vec_dict[wid] if wid in widx2vec_dict
 config.emb_mat = emb_mat
 
 BiDAF_Model = BiDAFModel(config)
+if os.path.isfile('../models/model.pkl'):
+    BiDAF_Model.load_state_dict(torch.load('../models/model.pkl'))
+    print('Loading model...')
 if usecuda:
     BiDAF_Model.cuda()
+
 BiDAFTrainer = Trainer(config,BiDAF_Model)
 
 
@@ -199,7 +204,7 @@ for epoch in range(0, config.EPOCHS):
         loss += sampleLoss
         numOfBatch += 1
         numOfSamples+=len(instances)
-        if numOfBatch%100 == 0:
+        if numOfBatch%1 == 0:
             end = time.time()
             print (str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : " + str(
                 loss / numOfSamples)+", run time = " + str(end - start))
