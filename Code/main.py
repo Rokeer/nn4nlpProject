@@ -188,7 +188,7 @@ for epoch in range(0, config.EPOCHS):
     start = time.time()
     # for instance in train:
     print("Start Training:" + str(epoch))
-    for sid in range(33000, len(train), config.BatchSize):
+    for sid in range(0, len(train), config.BatchSize):
         instances = train[sid:sid + config.BatchSize]
         if reverse:
             config.MaxSentenceLength = len(instances[0][0])
@@ -199,7 +199,7 @@ for epoch in range(0, config.EPOCHS):
         loss += sampleLoss
         numOfBatch += 1
         numOfSamples+=len(instances)
-        if numOfBatch%1000 == 0:
+        if numOfBatch%100 == 0:
             end = time.time()
             print (str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : " + str(
                 loss / numOfSamples)+", run time = " + str(end - start))
