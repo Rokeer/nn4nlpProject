@@ -52,13 +52,14 @@ def read_train(configuration):
             for w in answer.strip().split():
                 for c in w:
                     char_counter[c] += 1
-                cqi = [c2i[c] for c in list(w)]
-                cq.append((cqi + config.max_word_size * [0])[:config.max_word_size])
+
 
             sent_question = [w2i[x] for x in question.strip().split()]
             for q in question.strip().split():
                 for c in q:
                     char_counter[c] += 1
+                cqi = [c2i[c] for c in list(w)]
+                cq.append((cqi + config.max_word_size * [0])[:config.max_word_size])
             max_length = max(max_length, len(sent_context))
             max_Query_Length = max(max_Query_Length,len(sent_question))
             try:
@@ -152,8 +153,6 @@ w2i = defaultdict(lambda: len(w2i))
 c2i = defaultdict(lambda: len(c2i))
 char_counter = Counter()
 
-unk_char_src = c2i["<unk>"]
-c2i = defaultdict(lambda: unk_char_src, c2i)
 
 train = list(read_train(config))
 if reverse:
@@ -165,6 +164,9 @@ else:
 print(str(config.MaxSentenceLength))
 unk_src = w2i["<unk>"]
 w2i = defaultdict(lambda: unk_src, w2i)
+unk_char_src = c2i["<unk>"]
+c2i = defaultdict(lambda: unk_char_src, c2i)
+
 word_vocab_size = len(w2i)
 dev = list(read_dev(config.dev_src_file))
 if reverse:
