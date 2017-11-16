@@ -13,6 +13,7 @@ from trainer import Trainer
 import time
 import os
 import pdb
+import codecs
 
 if torch.cuda.is_available():
     usecuda = True
@@ -28,12 +29,12 @@ def read_train(configuration):
     max_Query_Length = 0
     lineindex = 0
     # , encoding='utf-8'
-    with open(config.train_src_file, "r") as f_src:
+    with codecs.open(config.train_src_file, "r",encoding='utf-8') as f_src:
 
         for line_src in f_src:
             cx = []
             cq = []
-            line_src = line_src.decode("utf-8")
+            #line_src = line_src.decode("utf-8")
             line_src = line_src.replace('\n','').replace('\r','').strip()
             if line_src == "":
                 continue
@@ -84,12 +85,12 @@ def read_dev(configuration):
     #max_Query_Length = 0
     lineindex = 0
     # , encoding='utf-8'
-    with open(config.dev_src_file, "r") as f_src:
+    with codecs.open(config.dev_src_file, "r",encoding='utf-8') as f_src:
 
         for line_src in f_src:
             cx = []
             cq = []
-            line_src = line_src.decode("utf-8")
+            #line_src = line_src.decode("utf-8")
             line_src = line_src.replace('\n','').replace('\r','').strip()
             if line_src == "":
                 continue
@@ -265,7 +266,7 @@ for epoch in range(0, config.EPOCHS):
         else:
             config.MaxSentenceLength = len(instances[len(instances)-1][0])
         # print(config.MaxSentenceLength)
-        sampleLoss = BiDAFTrainer.step(instances, config, config.is_train)
+        sampleLoss = BiDAFTrainer.step(instances, config, config.is_train) * len(instances)
         loss += sampleLoss
         numOfBatch += 1
         numOfSamples+=len(instances)
@@ -297,7 +298,7 @@ for epoch in range(0, config.EPOCHS):
             else:
                 config.MaxSentenceLength = len(instances[len(instances) - 1][0])
             # print(config.MaxSentenceLength)
-            sampleLoss = BiDAFTrainer.step(instances, config, config.is_train)
+            sampleLoss = BiDAFTrainer.step(instances, config, config.is_train) * len(instances)
             loss += sampleLoss
             numOfBatch += 1
             numOfSamples += len(instances)
@@ -309,7 +310,7 @@ for epoch in range(0, config.EPOCHS):
                 # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
                 #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
 
-        loss /= len(train)
+        loss /= len(numOfSamples)
         print('Dev Loss: ' + str(loss))
 
 
