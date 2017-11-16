@@ -139,7 +139,7 @@ class BiDAFModel(nn.Module):
             if length > 0:
                 if usecuda:
                     ContextCharPadding = Variable(torch.cuda.LongTensor(length, self.word_emb_size).zero_().unsqueeze(0))
-                    ContextChar_CNN = torch.cat((ContextChar_CNN, ContextCharPadding), 1)
+                    ContextChar_CNN = torch.cat((torch.cuda.LongTensor(ContextChar_CNN), ContextCharPadding), 1)
                 else:
                     ContextCharPadding = Variable(torch.LongTensor(length, self.word_emb_size).zero_().unsqueeze(0))
                     ContextChar_CNN = torch.cat((ContextChar_CNN, ContextCharPadding), 1)
@@ -148,7 +148,7 @@ class BiDAFModel(nn.Module):
             if length > 0:
                 if usecuda:
                     QueryCharPadding = Variable(torch.cuda.LongTensor(length, self.word_emb_size).zero_().unsqueeze(0))
-                    QueryChar_CNN = torch.cat((QueryChar_CNN, QueryCharPadding), 1)
+                    QueryChar_CNN = torch.cat((torch.cuda.LongTensor(QueryChar_CNN), QueryCharPadding), 1)
                 else:
                     QueryCharPadding = Variable(torch.LongTensor(length, self.word_emb_size).zero_().unsqueeze(0))
                     QueryChar_CNN = torch.cat((QueryChar_CNN, QueryCharPadding), 1)
