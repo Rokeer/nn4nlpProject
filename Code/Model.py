@@ -138,19 +138,19 @@ class BiDAFModel(nn.Module):
             length =  config.MaxSentenceLength - ContextChar_CNN.size()[1]
             if length > 0:
                 if usecuda:
-                    ContextCharPadding = Variable(torch.cuda.FloatTensor(length, self.word_emb_size).zero_().unsqueeze(0))
+                    ContextCharPadding = Variable(torch.cuda.LongTensor(length, self.word_emb_size).zero_().unsqueeze(0))
                     ContextChar_CNN = torch.cat((ContextChar_CNN, ContextCharPadding), 1)
                 else:
-                    ContextCharPadding = Variable(torch.FloatTensor(length, self.word_emb_size).zero_().unsqueeze(0))
+                    ContextCharPadding = Variable(torch.LongTensor(length, self.word_emb_size).zero_().unsqueeze(0))
                     ContextChar_CNN = torch.cat((ContextChar_CNN, ContextCharPadding), 1)
 
             length = config.MaxQuestionLength - QueryChar_CNN.size()[1]
             if length > 0:
                 if usecuda:
-                    QueryCharPadding = Variable(torch.cuda.FloatTensor(length, self.word_emb_size).zero_().unsqueeze(0))
+                    QueryCharPadding = Variable(torch.cuda.LongTensor(length, self.word_emb_size).zero_().unsqueeze(0))
                     QueryChar_CNN = torch.cat((QueryChar_CNN, QueryCharPadding), 1)
                 else:
-                    QueryCharPadding = Variable(torch.FloatTensor(length, self.word_emb_size).zero_().unsqueeze(0))
+                    QueryCharPadding = Variable(torch.LongTensor(length, self.word_emb_size).zero_().unsqueeze(0))
                     QueryChar_CNN = torch.cat((QueryChar_CNN, QueryCharPadding), 1)
 
             #print(Cx.size())
