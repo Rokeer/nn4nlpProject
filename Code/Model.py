@@ -130,15 +130,15 @@ class BiDAFModel(nn.Module):
                 #QueryChar = self.padVectors(QueryChar, self.MaxQuestionLength, self.max_word_size)
 
                 if usecuda:
-                    #ContextChar_beforeCNN = self.char_embed(Variable(torch.cuda.LongTensor(ContextChar)))
-                    ContextChar_beforeCNN = Variable(torch.cuda.LongTensor(self.char_embed(ContextChar)))
+                    ContextChar_beforeCNN = self.char_embed(Variable(torch.cuda.LongTensor(ContextChar)))
+                    #ContextChar_beforeCNN = Variable(torch.cuda.LongTensor(self.char_embed(ContextChar)))
                 else:
                     ContextChar_beforeCNN = self.char_embed(Variable(LongTensor(ContextChar)))
 
                 ContextChar_beforeCNN = ContextChar_beforeCNN.unsqueeze(0)
                 if usecuda:
-                    #QueryChar_beforeCNN = self.char_embed(Variable(torch.cuda.LongTensor(QueryChar)))
-                    QueryChar_beforeCNN = Variable(torch.cuda.LongTensor(self.char_embed(QueryChar)))
+                    QueryChar_beforeCNN = self.char_embed(Variable(torch.cuda.LongTensor(QueryChar)))
+                    #QueryChar_beforeCNN = Variable(torch.cuda.LongTensor(self.char_embed(QueryChar)))
                 else:
                     QueryChar_beforeCNN = self.char_embed(Variable(LongTensor(QueryChar)))
                 QueryChar_beforeCNN = QueryChar_beforeCNN.unsqueeze(0)

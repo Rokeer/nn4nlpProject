@@ -4,7 +4,7 @@ class Configuration():
         self.word_emb_size = 100
         self.CNNEmbeddingSize = 100
         self.char_emb_size = 8
-        self.char_vocab_size = 100
+        self.char_vocab_size = 300
         self.cnn_dropout_keep_prob = 0.8
         self.use_char_emb = True
         self.padding = 0
