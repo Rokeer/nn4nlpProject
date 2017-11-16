@@ -19,7 +19,7 @@ if torch.cuda.is_available():
 else:
     usecuda = False
 # usecuda = False
-reverse = False
+reverse = True
 if usecuda:
     print("Using Cuda")
 
