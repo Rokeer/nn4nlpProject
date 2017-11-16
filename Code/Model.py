@@ -87,6 +87,19 @@ class BiDAFModel(nn.Module):
             V.append(embed_size * [0])
         return V
 
+    def padTensors(self, T, max_l, embed_size):
+        l = max_l - T.size()[1]
+        if l > 0:
+            if usecuda:
+                pad_T = Variable(torch.cuda.FloatTensor([[0] * embed_size]*l)).unsqueeze(0)
+                #print(T.size(),pad_T.size())
+                T = torch.cat((T, pad_T), 1).cuda()
+            else:
+                pad_T = Variable(torch.zeros(l, embed_size)).unsqueeze(0)
+                T = torch.cat((T.type(FloatTensor), pad_T), 1)
+        return T
+
+
     def forward(self, instances, config):
         if usecuda:
             Context_Char_Word_list = Variable(
@@ -117,44 +130,30 @@ class BiDAFModel(nn.Module):
 
                 if usecuda:
                     ContextChar_beforeCNN = self.char_embed(Variable(torch.cuda.LongTensor(ContextChar)))
+                    #ContextChar_beforeCNN = Variable(torch.cuda.LongTensor(self.char_embed(ContextChar)))
                 else:
                     ContextChar_beforeCNN = self.char_embed(Variable(LongTensor(ContextChar)))
 
                 ContextChar_beforeCNN = ContextChar_beforeCNN.unsqueeze(0)
                 if usecuda:
                     QueryChar_beforeCNN = self.char_embed(Variable(torch.cuda.LongTensor(QueryChar)))
+                    #QueryChar_beforeCNN = Variable(torch.cuda.LongTensor(self.char_embed(QueryChar)))
                 else:
                     QueryChar_beforeCNN = self.char_embed(Variable(LongTensor(QueryChar)))
                 QueryChar_beforeCNN = QueryChar_beforeCNN.unsqueeze(0)
 
+                # Output from CNN is a FloatTensor
                 ContextChar_CNN = self.cnn_x(ContextChar_beforeCNN, self.filter_sizes, self.heights, self.padding)
                 QueryChar_CNN = self.cnn_q(QueryChar_beforeCNN, self.filter_sizes, self.heights, self.padding)
 
                 ContextChar_CNN = ContextChar_CNN.permute(0, 2, 1)
                 QueryChar_CNN = QueryChar_CNN.permute(0, 2, 1)
 
+            # pad word tensors from CNN output
+            ContextChar_CNN_ = self.padTensors(ContextChar_CNN, config.MaxSentenceLength, self.word_emb_size)
+            QueryChar_CNN_ = self.padTensors(QueryChar_CNN, self.MaxQuestionLength, self.word_emb_size)
 
-            length =  config.MaxSentenceLength - ContextChar_CNN.size()[1]
-            if length > 0:
-                if usecuda:
-                    ContextCharPadding = Variable(torch.cuda.FloatTensor(length, self.word_emb_size).zero_().unsqueeze(0))
-                    ContextChar_CNN = torch.cat((ContextChar_CNN, ContextCharPadding), 1)
-                else:
-                    ContextCharPadding = Variable(torch.FloatTensor(length, self.word_emb_size).zero_().unsqueeze(0))
-                    ContextChar_CNN = torch.cat((ContextChar_CNN, ContextCharPadding), 1)
-
-            length = config.MaxQuestionLength - QueryChar_CNN.size()[1]
-            if length > 0:
-                if usecuda:
-                    QueryCharPadding = Variable(torch.cuda.FloatTensor(length, self.word_emb_size).zero_().unsqueeze(0))
-                    QueryChar_CNN = torch.cat((QueryChar_CNN, QueryCharPadding), 1)
-                else:
-                    QueryCharPadding = Variable(torch.FloatTensor(length, self.word_emb_size).zero_().unsqueeze(0))
-                    QueryChar_CNN = torch.cat((QueryChar_CNN, QueryCharPadding), 1)
-
-            #print(Cx.size())
-            #print(Cq.size())
-
+            # Word Embedding: Load glove vectors for sentence and pad with 0
             ContextWord = self.loadSentVectors(Context)
             QueryWord = self.loadSentVectors(Query)
             ContextWord = np.array(self.padVectors(ContextWord, config.MaxSentenceLength, self.word_emb_size))
@@ -167,11 +166,9 @@ class BiDAFModel(nn.Module):
                 ContextWord_tensor = Variable(FloatTensor([ContextWord]))
                 QueryWord_tensor = Variable(FloatTensor([QueryWord]))
 
-            #print(Ax_tensor.size())
-            #print(Aq_tensor.size())
-
-            Context_Char_Word = torch.cat((ContextWord_tensor, ContextChar_CNN), 2)
-            Query_Char_Word = torch.cat((QueryWord_tensor, QueryChar_CNN), 2)
+            # Concatenate word vectors from word and character embeddings
+            Context_Char_Word = torch.cat((ContextWord_tensor, ContextChar_CNN_), 2)
+            Query_Char_Word = torch.cat((QueryWord_tensor, QueryChar_CNN_), 2)
             Context_Char_Word_list[count] = Context_Char_Word
             Query_Char_Word_list[count] = Query_Char_Word
             count = count + 1
