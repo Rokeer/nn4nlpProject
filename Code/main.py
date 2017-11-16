@@ -14,13 +14,16 @@ import time
 import os
 import pdb
 import codecs
+import pickle
+import cloud
+
 
 if torch.cuda.is_available():
     usecuda = True
 else:
     usecuda = False
 
-usecuda = False
+LoadFiles = False
 reverse = True
 if usecuda:
     print("Using Cuda")
@@ -75,8 +78,8 @@ def read_train(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            #if lineindex >= 50:
-            #    break
+            if lineindex >= 500:
+                break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
@@ -136,40 +139,7 @@ def read_dev(configuration):
     #config.MaxSentenceLength = max_length
     #config.MaxQuestionLength = max_Query_Length
 
-# def read_dev(fname_src):
-#     #global max_length
-#     lineindex = 0
-#     question = context = ''
-#     answers, sent_answers, sent_context, sent_question = ([] for i in range(4))
-#     with open(fname_src, "r") as f_src:
-#         for line_src in f_src:
-#             line_src = line_src.replace('\n', '').replace('\r', '').strip()
-#             if line_src == "":
-#                 continue
-#             lineindex += 1
-#             if context == line_src.split('\t')[1] and question == line_src.split('\t')[2]:
-#                 answer = line_src.split('\t')[3]
-#                 answers.append(answer)
-#                 sent_answers.append([w2i[x] for x in answer.strip().split()])
-#             else:
-#                 if context != '' or question != '':
-#                     yield (sent_context, sent_question, sent_answers, context, question, answers, start, end)
-#                 context = line_src.split('\t')[1]
-#                 #max_length = max(max_length, len(context))
-#
-#                 question = line_src.split('\t')[2]
-#                 start = int(line_src.split('\t')[4])
-#                 end = int(line_src.split('\t')[5])
-#                 sent_context = [w2i[x] for x in context.strip().split()]
-#                 sent_question = [w2i[x] for x in question.strip().split()]
-#                 answers = []
-#                 sent_answers = []
-#
-#                 answer = line_src.split('\t')[3]
-#                 answers.append(answer)
-#                 sent_answers.append([w2i[x] for x in answer.strip().split()])
-#                 #if lineindex >= 100:
-#                 #    break
+
 
 # This function uses the global w2i dictionary and gets the glove vector for each word as a dictionary
 def get_GLOVE_word2vec(glove_path, word_emb_size):
@@ -206,40 +176,80 @@ def timeSince(since, percent):
     return '%s (- %s)' % (asMinutes(s), asMinutes(rs))
 
 
-config = Configuration()
-w2i = defaultdict(lambda: len(w2i))
-c2i = defaultdict(lambda: len(c2i) + 1)
-char_counter = Counter()
+if LoadFiles == True:
+    ######################## Loading Everything###############################33
+    with open('../objects/emb_mat', 'rb') as f:
+        emb_mat = pickle.load(f)
+    with open('../objects/w2i', 'rb') as f:
+        w2i = pickle.load(f)
+    with open('../objects/c2i', 'rb') as f:
+        c2i = pickle.load(f)
+    with open('../objects/dev', 'rb') as f:
+        dev = pickle.load(f)
+    with open('./objects/train', 'rb') as f:
+        train = pickle.load(f)
+    with open('../objects/word2vec_dict', 'rb') as f:
+        word2vec_dict = pickle.load(f)
+    with open('../objects/widx2vec_dict', 'rb') as f:
+        widx2vec_dict = pickle.load(f)
+    with open('../objects/config', 'rb') as f:
+        config = pickle.load(f)
 
-
-train = list(read_train(config))
-if reverse:
-    train.sort(key=lambda x: len(x[0]), reverse=reverse)
 else:
-    train.sort(key=lambda x: len(x[0]))
+    config = Configuration()
+    w2i = defaultdict(lambda: len(w2i))
+    c2i = defaultdict(lambda: len(c2i) + 1)
+    char_counter = Counter()
 
-# train = train[0:0 + config.BatchSize]
-print(str(config.MaxSentenceLength))
-unk_src = w2i["<unk>"]
-w2i = defaultdict(lambda: unk_src, w2i)
-unk_char_src = c2i["<unk>"]
-c2i = defaultdict(lambda: unk_char_src, c2i)
 
-word_vocab_size = len(w2i)
-print(len(c2i))
-config.char_vocab_size = len(c2i)
-dev = list(read_dev(config.dev_src_file))
-if reverse:
-    dev.sort(key=lambda x: len(x[0]), reverse=reverse)
-else:
-    dev.sort(key=lambda x: len(x[0]))
+    train = list(read_train(config))
+    if reverse:
+        train.sort(key=lambda x: len(x[0]), reverse=reverse)
+    else:
+        train.sort(key=lambda x: len(x[0]))
 
-word2vec_dict = get_GLOVE_word2vec(config.glove_path, config.GloveEmbeddingSize)
-widx2vec_dict = {w2i[word]: vec for word, vec in word2vec_dict.items() if word in w2i}
-emb_mat = np.array([widx2vec_dict[wid] if wid in widx2vec_dict
-                    else np.random.multivariate_normal(np.zeros(config.word_emb_size), np.eye(config.word_emb_size))
-                    for wid in range(word_vocab_size)])
-config.emb_mat = emb_mat
+    # train = train[0:0 + config.BatchSize]
+    print(str(config.MaxSentenceLength))
+    unk_src = w2i["<unk>"]
+    w2i = defaultdict(lambda: unk_src, w2i)
+    unk_char_src = c2i["<unk>"]
+    c2i = defaultdict(lambda: unk_char_src, c2i)
+
+    word_vocab_size = len(w2i)
+    print(len(c2i))
+    config.char_vocab_size = len(c2i)
+    dev = list(read_dev(config.dev_src_file))
+    if reverse:
+        dev.sort(key=lambda x: len(x[0]), reverse=reverse)
+    else:
+        dev.sort(key=lambda x: len(x[0]))
+
+    word2vec_dict = get_GLOVE_word2vec(config.glove_path, config.GloveEmbeddingSize)
+    widx2vec_dict = {w2i[word]: vec for word, vec in word2vec_dict.items() if word in w2i}
+    emb_mat = np.array([widx2vec_dict[wid] if wid in widx2vec_dict
+                        else np.random.multivariate_normal(np.zeros(config.word_emb_size), np.eye(config.word_emb_size))
+                        for wid in range(word_vocab_size)])
+    config.emb_mat = emb_mat
+
+
+    ######################## Saving Everything so far###############################
+    with open('../objects/emb_mat', 'wb') as f:
+        cloud.serialization.cloudpickle.dump(emb_mat, f)
+    with open('../objects/config', 'wb') as f:
+        cloud.serialization.cloudpickle.dump(config, f)
+    with open('../objects/dev', 'wb') as f:
+        cloud.serialization.cloudpickle.dump(dev, f)
+    with open('../objects/train', 'wb') as f:
+        cloud.serialization.cloudpickle.dump(train, f)
+    with open('../objects/w2i', 'wb') as f:
+        cloud.serialization.cloudpickle.dump(w2i, f)
+    with open('../objects/c2i', 'wb') as f:
+        cloud.serialization.cloudpickle.dump(c2i, f)
+    with open('../objects/word2vec_dict', 'wb') as f:
+        cloud.serialization.cloudpickle.dump(word2vec_dict, f)
+    with open('../objects/widx2vec_dict', 'wb') as f:
+        cloud.serialization.cloudpickle.dump(widx2vec_dict, f)
+
 
 BiDAF_Model = BiDAFModel(config)
 if os.path.isfile('../models/model_nov16.pkl'):
@@ -318,3 +328,43 @@ for epoch in range(0, config.EPOCHS):
     loss /= len(train)
     print(str(loss))
     torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'_nov16.pkl')
+
+
+
+
+
+
+# def read_dev(fname_src):
+#     #global max_length
+#     lineindex = 0
+#     question = context = ''
+#     answers, sent_answers, sent_context, sent_question = ([] for i in range(4))
+#     with open(fname_src, "r") as f_src:
+#         for line_src in f_src:
+#             line_src = line_src.replace('\n', '').replace('\r', '').strip()
+#             if line_src == "":
+#                 continue
+#             lineindex += 1
+#             if context == line_src.split('\t')[1] and question == line_src.split('\t')[2]:
+#                 answer = line_src.split('\t')[3]
+#                 answers.append(answer)
+#                 sent_answers.append([w2i[x] for x in answer.strip().split()])
+#             else:
+#                 if context != '' or question != '':
+#                     yield (sent_context, sent_question, sent_answers, context, question, answers, start, end)
+#                 context = line_src.split('\t')[1]
+#                 #max_length = max(max_length, len(context))
+#
+#                 question = line_src.split('\t')[2]
+#                 start = int(line_src.split('\t')[4])
+#                 end = int(line_src.split('\t')[5])
+#                 sent_context = [w2i[x] for x in context.strip().split()]
+#                 sent_question = [w2i[x] for x in question.strip().split()]
+#                 answers = []
+#                 sent_answers = []
+#
+#                 answer = line_src.split('\t')[3]
+#                 answers.append(answer)
+#                 sent_answers.append([w2i[x] for x in answer.strip().split()])
+#                 #if lineindex >= 100:
+#                 #    break
