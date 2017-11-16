@@ -240,8 +240,8 @@ emb_mat = np.array([widx2vec_dict[wid] if wid in widx2vec_dict
 config.emb_mat = emb_mat
 
 BiDAF_Model = BiDAFModel(config)
-if os.path.isfile('../models/model_New.pkl'):
-    BiDAF_Model.load_state_dict(torch.load('../models/model_New.pkl'))
+if os.path.isfile('../models/model_nov16.pkl'):
+    BiDAF_Model.load_state_dict(torch.load('../models/model_nov16.pkl'))
     print('Loading model...')
 if usecuda:
     BiDAF_Model.cuda()
@@ -269,7 +269,7 @@ for epoch in range(0, config.EPOCHS):
         loss += sampleLoss
         numOfBatch += 1
         numOfSamples+=len(instances)
-        if numOfBatch % 500 == 0:
+        if numOfBatch % 1000 == 0:
             end = time.time()
             print (str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : " + str(
                 loss / numOfSamples)+", run time = " + str(end - start))
@@ -279,7 +279,7 @@ for epoch in range(0, config.EPOCHS):
 
     loss /= len(train)
     print(str(loss))
-    torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'_New.pkl')
+    torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'_nov16.pkl')
 
     #Start Dev
 
