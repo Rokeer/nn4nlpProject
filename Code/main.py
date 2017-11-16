@@ -13,8 +13,6 @@ from trainer import Trainer
 import time
 import os
 import pdb
-import codecs
-
 
 if torch.cuda.is_available():
     usecuda = True
@@ -30,12 +28,12 @@ def read_train(configuration):
     max_Query_Length = 0
     lineindex = 0
     # , encoding='utf-8'
-    with codecs.open(config.train_src_file, "r", encoding='utf-8') as f_src:
+    with open(config.train_src_file, "r") as f_src:
 
         for line_src in f_src:
             cx = []
             cq = []
-#            line_src = line_src.decode("utf-8")
+            line_src = line_src.decode("utf-8")
             line_src = line_src.replace('\n','').replace('\r','').strip()
             if line_src == "":
                 continue
@@ -75,20 +73,23 @@ def read_train(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            if lineindex >= 100:
+            if lineindex >= 50:
                 break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
 
 def read_dev(configuration):
+    #max_length = 0
+    #max_Query_Length = 0
     lineindex = 0
-    with codecs.open(config.dev_src_file, "r", encoding='utf-8') as f_src:
+    # , encoding='utf-8'
+    with open(config.dev_src_file, "r") as f_src:
 
         for line_src in f_src:
             cx = []
             cq = []
-#            line_src = line_src.decode("utf-8")
+            line_src = line_src.decode("utf-8")
             line_src = line_src.replace('\n','').replace('\r','').strip()
             if line_src == "":
                 continue
@@ -128,7 +129,7 @@ def read_dev(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            if lineindex >= 30:
+            if lineindex >= 50:
                 break
     #config.MaxSentenceLength = max_length
     #config.MaxQuestionLength = max_Query_Length
@@ -267,7 +268,7 @@ for epoch in range(0, config.EPOCHS):
         sampleLoss = BiDAFTrainer.step(instances, config, config.is_train)
         loss += sampleLoss
         numOfBatch += 1
-        numOfSamples += len(instances)
+        numOfSamples+=len(instances)
         if numOfBatch % 1000 == 0:
             end = time.time()
             print (str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : " + str(
@@ -276,7 +277,7 @@ for epoch in range(0, config.EPOCHS):
             # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
             #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
 
-    loss /= numOfSamples
+    loss /= len(train)
     print(str(loss))
     torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'_nov16.pkl')
 
@@ -308,7 +309,7 @@ for epoch in range(0, config.EPOCHS):
                 # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
                 #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
 
-        loss /= numOfSamples
+        loss /= len(train)
         print('Dev Loss: ' + str(loss))
 
 

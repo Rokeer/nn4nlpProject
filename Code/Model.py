@@ -39,6 +39,7 @@ class BiDAFModel(nn.Module):
         self.MaxQuestionLength = config.MaxQuestionLength
         self.maxNumberofSentence = config.MaxNumberOfSentences
         self.maxNumberofSentence = 1
+        # self.maxSentenceLength = config.MaxSentenceLength
         self.use_char_emb = config.use_char_emb
         self.cnn_dropout_keep_prob = config.cnn_dropout_keep_prob
         self.char_vocab_size = config.char_vocab_size
@@ -72,7 +73,7 @@ class BiDAFModel(nn.Module):
         self.o2_bilstm = BiModeling(14 * self.hidden_size, self.hidden_size, self.lstm_layers)
         self.o3_output = Outputs(self.is_train, 10 * self.hidden_size, self.outputDropout)
 
-        self.loss = nn.CrossEntropyLoss(size_average= False)
+        self.loss = nn.CrossEntropyLoss()
 
     def loadSentVectors(self, sentence):
         M = []
