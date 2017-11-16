@@ -189,11 +189,7 @@ class HighwayNetwork(nn.Module):
     def forward(self, input, isTrain):
         currentValue = input
         for index in range(self.numLayers):
-            # getLinearTransofrmation([currentValue], )
             output = self.layers[index](currentValue, isTrain)
-            # output = highway_layer(currentValue, bias, bias_start=bias_start, scope="layer_{}".format(layer_idx), wd=wd,
-            #                        input_keep_prob=input_keep_prob, is_train=is_train)
-
             currentValue = output
         return currentValue
 
