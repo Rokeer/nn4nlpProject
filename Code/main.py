@@ -224,6 +224,8 @@ unk_char_src = c2i["<unk>"]
 c2i = defaultdict(lambda: unk_char_src, c2i)
 
 word_vocab_size = len(w2i)
+print(len(c2i))
+config.char_vocab_size = len(c2i)
 dev = list(read_dev(config.dev_src_file))
 if reverse:
     dev.sort(key=lambda x: len(x[0]), reverse=reverse)
