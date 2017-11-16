@@ -19,7 +19,8 @@ if torch.cuda.is_available():
     usecuda = True
 else:
     usecuda = False
-# usecuda = False
+
+usecuda = False
 reverse = True
 if usecuda:
     print("Using Cuda")
@@ -74,8 +75,8 @@ def read_train(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            if lineindex >= 50:
-                break
+            #if lineindex >= 50:
+            #    break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
@@ -130,7 +131,7 @@ def read_dev(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            if lineindex >= 50:
+            if lineindex >= 1000:
                 break
     #config.MaxSentenceLength = max_length
     #config.MaxQuestionLength = max_Query_Length
@@ -242,16 +243,52 @@ config.emb_mat = emb_mat
 
 BiDAF_Model = BiDAFModel(config)
 if os.path.isfile('../models/model_nov16.pkl'):
-    BiDAF_Model.load_state_dict(torch.load('../models/model_nov16.pkl'))
+    BiDAF_Model.load_state_dict(torch.load('../models/model_nov16.pkl', map_location=lambda storage, loc: storage))
     print('Loading model...')
 if usecuda:
     BiDAF_Model.cuda()
+else:
+    BiDAF_Model.cpu()
 
 BiDAFTrainer = Trainer(config,BiDAF_Model)
 
-
 for epoch in range(0, config.EPOCHS):
+    #############################DEV##############################3
+    # Start Dev
+    if epoch % 5 == 0:
+        config.is_train = False
+        BiDAF_Model.eval()
+        loss = 0
+        numOfSamples = 0
+        numOfBatch = 0
+        start = time.time()
+        print("Start Dev:")
+        for sid in range(0, len(dev), config.DevBatchSize):
+            instances = dev[sid:sid + config.DevBatchSize]
+            if reverse:
+                config.MaxSentenceLength = len(instances[0][0])
+            else:
+                config.MaxSentenceLength = len(instances[len(instances) - 1][0])
+            # print(config.MaxSentenceLength)
+            sampleLoss = BiDAFTrainer.step(instances, config, config.is_train) * len(instances)
+            loss += sampleLoss
+            numOfBatch += 1
+            numOfSamples += len(instances)
+            if numOfSamples % 1000 == 0:
+                end = time.time()
+                print("Dev: " + str(numOfSamples) + ' / ' + str(len(dev)) + " , Current loss : " + str(
+                    loss / numOfSamples) + ", run time = " + str(end - start))
+                start = time.time()
+                # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
+                #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
+
+        loss /= len(numOfSamples)
+        print('Dev Loss: ' + str(loss))
+
+    ####################################################Train#########################################3
+
     config.is_train = True
+    BiDAF_Model.train()
     loss = 0
     # need to implement BATCH
     numOfSamples = 0
@@ -281,70 +318,3 @@ for epoch in range(0, config.EPOCHS):
     loss /= len(train)
     print(str(loss))
     torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'_nov16.pkl')
-
-    #Start Dev
-
-    if epoch % 5 ==0:
-        config.is_train = False
-        loss = 0
-        numOfSamples = 0
-        numOfBatch = 0
-        start = time.time()
-        print("Start Dev:")
-        for sid in range(0, len(dev), config.DevBatchSize):
-            instances = dev[sid:sid + config.DevBatchSize]
-            if reverse:
-                config.MaxSentenceLength = len(instances[0][0])
-            else:
-                config.MaxSentenceLength = len(instances[len(instances) - 1][0])
-            # print(config.MaxSentenceLength)
-            sampleLoss = BiDAFTrainer.step(instances, config, config.is_train) * len(instances)
-            loss += sampleLoss
-            numOfBatch += 1
-            numOfSamples += len(instances)
-            if numOfSamples % 1000 == 0:
-                end = time.time()
-                print("Dev: " + str(numOfSamples) + ' / ' + str(len(dev)) + " , Current loss : " + str(
-                    loss / numOfSamples) + ", run time = " + str(end - start))
-                start = time.time()
-                # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
-                #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
-
-        loss /= len(numOfSamples)
-        print('Dev Loss: ' + str(loss))
-
-
-
-
-
-
-
-
-''' Don't touch anything below this line '''
-'''
-for epoch in range(0, config.EPOCHS):
-    loss = 0
-    # need to implement BATCH
-    numOfSamples = 0
-    numOfBatch = 0
-    start = time.time()
-    for instance in train:
-        # for sid in range(0, len(train), config.BatchSize):
-        #     instances = train[sid:sid + config.BatchSize]
-
-        sampleLoss = BiDAFTrainer.step(instance, config.is_train)
-        loss += sampleLoss
-        numOfSamples += len(train)
-        numOfBatch += 1
-        if numOfBatch%2 == 0:
-            print (str(epoch) + " , " + str(numOfBatch) + " ," + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : "+str(loss / numOfSamples))
-            # end = time.time()
-            # print("run time = " + str(end - start))
-            # start = time.time()
-            print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
-                                         numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
-
-    loss /= len(train)
-    print(loss)
-    torch.save(BiDAF_Model.state_dict(), '../models/epoch.pkl')
-'''
