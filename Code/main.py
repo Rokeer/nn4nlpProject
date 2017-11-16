@@ -33,7 +33,7 @@ def read_train(configuration):
         for line_src in f_src:
             cx = []
             cq = []
-            #line_src = line_src.decode("utf-8")
+            line_src = line_src.decode("utf-8")
             line_src = line_src.replace('\n','').replace('\r','').strip()
             if line_src == "":
                 continue
@@ -73,8 +73,8 @@ def read_train(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            if lineindex >= 100:
-                break
+            #if lineindex >= 100:
+            #    break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
@@ -89,7 +89,7 @@ def read_dev(configuration):
         for line_src in f_src:
             cx = []
             cq = []
-            #line_src = line_src.decode("utf-8")
+            line_src = line_src.decode("utf-8")
             line_src = line_src.replace('\n','').replace('\r','').strip()
             if line_src == "":
                 continue
@@ -267,7 +267,7 @@ for epoch in range(0, config.EPOCHS):
         loss += sampleLoss
         numOfBatch += 1
         numOfSamples+=len(instances)
-        if numOfBatch % 2 == 0:
+        if numOfBatch % 500 == 0:
             end = time.time()
             print (str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : " + str(
                 loss / numOfSamples)+", run time = " + str(end - start))
