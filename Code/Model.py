@@ -90,12 +90,12 @@ class BiDAFModel(nn.Module):
 
     def padTensors(self, T, max_l, embed_size):
         l = max_l - T.size()[1]
-        if l >= 0:
+        if l > 0:
             if usecuda:
                 pad_T = Variable(torch.cuda.FloatTensor([[0] * embed_size]*l)).unsqueeze(0)
                 print(T.size(),pad_T.size())
 
-                T = torch.cat((T, pad_T), 1)
+                T = torch.cat((T, pad_T), 1).cuda()
             else:
                 pad_T = Variable(torch.zeros(l, embed_size)).unsqueeze(0)
                 T = torch.cat((T.type(FloatTensor), pad_T), 1)
