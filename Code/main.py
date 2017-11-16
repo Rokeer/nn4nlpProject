@@ -15,7 +15,7 @@ import os
 import pdb
 import codecs
 import pickle
-import cloud
+import cloudpickle
 
 
 if torch.cuda.is_available():
@@ -78,8 +78,8 @@ def read_train(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            if lineindex >= 500:
-                break
+            #if lineindex >= 50:
+            #    break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
@@ -134,8 +134,8 @@ def read_dev(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            if lineindex >= 1000:
-                break
+            #if lineindex >= 50:
+            #    break
     #config.MaxSentenceLength = max_length
     #config.MaxQuestionLength = max_Query_Length
 
@@ -234,21 +234,21 @@ else:
 
     ######################## Saving Everything so far###############################
     with open('../objects/emb_mat', 'wb') as f:
-        cloud.serialization.cloudpickle.dump(emb_mat, f)
+        cloudpickle.dump(emb_mat, f)
     with open('../objects/config', 'wb') as f:
-        cloud.serialization.cloudpickle.dump(config, f)
+       cloudpickle.dump(config, f)
     with open('../objects/dev', 'wb') as f:
-        cloud.serialization.cloudpickle.dump(dev, f)
+        cloudpickle.dump(dev, f)
     with open('../objects/train', 'wb') as f:
-        cloud.serialization.cloudpickle.dump(train, f)
+        cloudpickle.dump(train, f)
     with open('../objects/w2i', 'wb') as f:
-        cloud.serialization.cloudpickle.dump(w2i, f)
+        cloudpickle.dump(w2i, f)
     with open('../objects/c2i', 'wb') as f:
-        cloud.serialization.cloudpickle.dump(c2i, f)
+        cloudpickle.dump(c2i, f)
     with open('../objects/word2vec_dict', 'wb') as f:
-        cloud.serialization.cloudpickle.dump(word2vec_dict, f)
+        cloudpickle.dump(word2vec_dict, f)
     with open('../objects/widx2vec_dict', 'wb') as f:
-        cloud.serialization.cloudpickle.dump(widx2vec_dict, f)
+        cloudpickle.dump(widx2vec_dict, f)
 
 
 BiDAF_Model = BiDAFModel(config)
