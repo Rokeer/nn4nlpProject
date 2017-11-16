@@ -33,7 +33,7 @@ def read_train(configuration):
         for line_src in f_src:
             cx = []
             cq = []
-#            line_src = line_src.decode("utf-8")
+            line_src = line_src.decode("utf-8")
             line_src = line_src.replace('\n','').replace('\r','').strip()
             if line_src == "":
                 continue
@@ -89,7 +89,7 @@ def read_dev(configuration):
         for line_src in f_src:
             cx = []
             cq = []
-#            line_src = line_src.decode("utf-8")
+            line_src = line_src.decode("utf-8")
             line_src = line_src.replace('\n','').replace('\r','').strip()
             if line_src == "":
                 continue
