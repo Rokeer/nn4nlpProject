@@ -73,7 +73,7 @@ def read_train(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            if lineindex >= 500:
+            if lineindex >= 100:
                 break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
@@ -129,7 +129,7 @@ def read_dev(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            if lineindex >= 100:
+            if lineindex >= 50:
                 break
     #config.MaxSentenceLength = max_length
     #config.MaxQuestionLength = max_Query_Length
@@ -267,7 +267,7 @@ for epoch in range(0, config.EPOCHS):
         loss += sampleLoss
         numOfBatch += 1
         numOfSamples+=len(instances)
-        if numOfBatch%1000 == 0:
+        if numOfBatch%1 == 0:
             end = time.time()
             print (str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : " + str(
                 loss / numOfSamples)+", run time = " + str(end - start))
@@ -299,7 +299,7 @@ for epoch in range(0, config.EPOCHS):
             loss += sampleLoss
             numOfBatch += 1
             numOfSamples += len(instances)
-            if numOfSamples % 1000 == 0:
+            if numOfSamples % 10 == 0:
                 end = time.time()
                 print("Dev: " + str(numOfSamples) + ' / ' + str(len(dev)) + " , Current loss : " + str(
                     loss / numOfSamples) + ", run time = " + str(end - start))
