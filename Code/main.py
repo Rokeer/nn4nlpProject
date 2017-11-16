@@ -82,10 +82,7 @@ def read_train(configuration):
 
 
 def read_dev(configuration):
-    #max_length = 0
-    #max_Query_Length = 0
     lineindex = 0
-    # , encoding='utf-8'
     with codecs.open(config.dev_src_file, "r", encoding='utf-8') as f_src:
 
         for line_src in f_src:

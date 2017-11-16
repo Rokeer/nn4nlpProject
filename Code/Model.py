@@ -39,7 +39,6 @@ class BiDAFModel(nn.Module):
         self.MaxQuestionLength = config.MaxQuestionLength
         self.maxNumberofSentence = config.MaxNumberOfSentences
         self.maxNumberofSentence = 1
-        # self.maxSentenceLength = config.MaxSentenceLength
         self.use_char_emb = config.use_char_emb
         self.cnn_dropout_keep_prob = config.cnn_dropout_keep_prob
         self.char_vocab_size = config.char_vocab_size
