@@ -267,7 +267,7 @@ for epoch in range(0, config.EPOCHS):
         loss += sampleLoss
         numOfBatch += 1
         numOfSamples+=len(instances)
-        if numOfBatch % 1000 == 0:
+        if numOfBatch % 2 == 0:
             end = time.time()
             print (str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : " + str(
                 loss / numOfSamples)+", run time = " + str(end - start))
