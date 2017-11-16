@@ -73,7 +73,7 @@ class BiDAFModel(nn.Module):
         self.o2_bilstm = BiModeling(14 * self.hidden_size, self.hidden_size, self.lstm_layers)
         self.o3_output = Outputs(self.is_train, 10 * self.hidden_size, self.outputDropout)
 
-        self.loss = nn.CrossEntropyLoss()
+        self.loss = nn.CrossEntropyLoss(size_average= False)
 
     def loadSentVectors(self, sentence):
         M = []
