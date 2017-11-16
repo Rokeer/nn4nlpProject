@@ -73,8 +73,8 @@ def read_train(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            #if lineindex >= 200:
-            #    break
+            if lineindex >= 2000:
+                break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
@@ -129,8 +129,8 @@ def read_dev(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            #if lineindex >= 200:
-            #    break
+            if lineindex >= 200:
+                break
     #config.MaxSentenceLength = max_length
     #config.MaxQuestionLength = max_Query_Length
 
@@ -277,7 +277,7 @@ for epoch in range(0, config.EPOCHS):
 
     loss /= len(train)
     print(str(loss))
-    torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'.pkl')
+    #torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'.pkl')
 
     #Start Dev
 
