@@ -130,13 +130,15 @@ class BiDAFModel(nn.Module):
                 #QueryChar = self.padVectors(QueryChar, self.MaxQuestionLength, self.max_word_size)
 
                 if usecuda:
-                    ContextChar_beforeCNN = self.char_embed(Variable(torch.cuda.LongTensor(ContextChar)))
+                    #ContextChar_beforeCNN = self.char_embed(Variable(torch.cuda.LongTensor(ContextChar)))
+                    ContextChar_beforeCNN = Variable(torch.cuda.LongTensor(self.char_embed(ContextChar)))
                 else:
                     ContextChar_beforeCNN = self.char_embed(Variable(LongTensor(ContextChar)))
 
                 ContextChar_beforeCNN = ContextChar_beforeCNN.unsqueeze(0)
                 if usecuda:
-                    QueryChar_beforeCNN = self.char_embed(Variable(torch.cuda.LongTensor(QueryChar)))
+                    #QueryChar_beforeCNN = self.char_embed(Variable(torch.cuda.LongTensor(QueryChar)))
+                    QueryChar_beforeCNN = Variable(torch.cuda.LongTensor(self.char_embed(QueryChar)))
                 else:
                     QueryChar_beforeCNN = self.char_embed(Variable(LongTensor(QueryChar)))
                 QueryChar_beforeCNN = QueryChar_beforeCNN.unsqueeze(0)
@@ -151,24 +153,6 @@ class BiDAFModel(nn.Module):
             # pad word tensors from CNN output
             ContextChar_CNN_ = self.padTensors(ContextChar_CNN, config.MaxSentenceLength, self.word_emb_size)
             QueryChar_CNN_ = self.padTensors(QueryChar_CNN, self.MaxQuestionLength, self.word_emb_size)
-
-            '''length =  config.MaxSentenceLength - ContextChar_CNN.size()[1]
-            if length > 0:
-                if usecuda:
-                    ContextCharPadding = Variable(torch.cuda.FloatTensor(length, self.word_emb_size).zero_().unsqueeze(0))
-                    ContextChar_CNN = torch.cat((ContextChar_CNN.type(FloatTensor), ContextCharPadding), 1)
-                else:
-                    ContextCharPadding = Variable(torch.FloatTensor(length, self.word_emb_size).zero_().unsqueeze(0))
-                    ContextChar_CNN = torch.cat((ContextChar_CNN.type(FloatTensor), ContextCharPadding), 1)
-
-            length = config.MaxQuestionLength - QueryChar_CNN.size()[1]
-            if length > 0:
-                if usecuda:
-                    QueryCharPadding = Variable(torch.cuda.FloatTensor(length, self.word_emb_size).zero_().unsqueeze(0))
-                    QueryChar_CNN = torch.cat((QueryChar_CNN.type(FloatTensor), QueryCharPadding), 1)
-                else:
-                    QueryCharPadding = Variable(torch.FloatTensor(length, self.word_emb_size).zero_().unsqueeze(0))
-                    QueryChar_CNN = torch.cat((QueryChar_CNN.type(FloatTensor), QueryCharPadding), 1)'''
 
             # Word Embedding: Load glove vectors for sentence and pad with 0
             ContextWord = self.loadSentVectors(Context)
