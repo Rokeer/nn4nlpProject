@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from functools import reduce
 from operator import mul
+#from torch import ByteTensor
 #import code
 
 if torch.cuda.is_available():
@@ -107,19 +108,29 @@ class attentionLayer(nn.Module):
         # self.num_sentences = numofSentences # number of sentences in context
         # self.questionLength = QueryLength # question length
 
-    def forward(self, h_vector, u_vector, is_train, config):
+    def forward(self, h_vector, u_vector, is_train, config, contextMask, QuestionMask):
         # Add new dimension and repeat h vector multiple times in that dimension to ease the multiplication with the query.
         h_vector_expanded = h_vector.unsqueeze(3).repeat(1, 1, 1, config.MaxQuestionLength, 1)
+        contextMask_expanded = contextMask.unsqueeze(3).repeat(1, 1, 1, config.MaxQuestionLength)
+
         # Add two dimensions one for sentences and one sentence length and repeat u vector multiple times in these dimension.
         u_vector_expanded = u_vector.unsqueeze(1).unsqueeze(1).repeat(1, config.MaxNumberOfSentences, config.MaxSentenceLength, 1, 1)
+        QuestionMask_expanded = QuestionMask.unsqueeze(1).unsqueeze(1).repeat(1, config.MaxNumberOfSentences, config.MaxSentenceLength, 1)
+
 
         h_u_mul = h_vector_expanded * u_vector_expanded
+        Context_Question_mask = contextMask_expanded & QuestionMask_expanded
+
         allVectors = [h_vector_expanded, u_vector_expanded, h_u_mul]
 
         flat_vectors = [F.dropout(flatten(arg, 1), training=is_train) for arg in allVectors]
         flat_outs = self.S_weightVector(torch.cat(flat_vectors, 1))
         out = reconstruct(flat_outs, allVectors[0], 1)
         sValues = out.squeeze(len(list(allVectors[0].size())) - 1)
+
+        # Masking values
+        #maskValues = torch.FloatTensor(Context_Question_mask) - (~Context_Question_mask)
+        sValues.data = torch.add(sValues.data, (~Context_Question_mask).float() * -1e20)
 
         # query attention
         flat_sValues = flatten(sValues, 1)

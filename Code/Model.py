@@ -9,7 +9,7 @@ import torch.nn.functional as F
 
 from torch.nn import Embedding
 from torch.autograd import Variable
-from torch import LongTensor, FloatTensor
+from torch import LongTensor, FloatTensor, ByteTensor
 
 from Layers import attentionLayer as atLayer
 from Layers import BiModeling, Outputs, selection, BiLSTM, Multi_Conv1D, Conv1D, HighwayNetwork
@@ -43,7 +43,6 @@ class BiDAFModel(nn.Module):
         self.use_char_emb = config.use_char_emb
         self.cnn_dropout_keep_prob = config.cnn_dropout_keep_prob
         self.char_vocab_size = config.char_vocab_size
-        # self.char_vocab_size = 1369
         self.char_emb_size = config.char_emb_size
         self.emb_mat = config.emb_mat
         self.max_word_size = config.max_word_size
@@ -101,6 +100,19 @@ class BiDAFModel(nn.Module):
                 T = torch.cat((T.type(FloatTensor), pad_T), 1)
         return T
 
+    def getMask(self, instances, config):
+        contextMask = [[1 for i in range(len(instance[0]))] + [0 for j in range(config.MaxSentenceLength - len(instance[0]))] for instance in instances]
+        questionMask = [[1 for i in range(len(instance[1]))] + [0 for j in range(config.MaxQuestionLength - len(instance[1]))] for instance in instances]
+
+        if usecuda:
+            contextMask_Tensor = torch.cuda.ByteTensor(contextMask)
+            questionMask_Tensor = torch.cuda.ByteTensor(questionMask)
+        else:
+            contextMask_Tensor = torch.ByteTensor(contextMask)#,requires_grad=False)
+            questionMask_Tensor = torch.ByteTensor(questionMask)#,requires_grad=False)
+
+        contextMask_Tensor = contextMask_Tensor.unsqueeze(1)
+        return contextMask_Tensor, questionMask_Tensor
 
     def forward(self, instances, config):
         if usecuda:
@@ -114,6 +126,7 @@ class BiDAFModel(nn.Module):
             Query_Char_Word_list = Variable(
                 torch.zeros(len(instances), config.MaxQuestionLength, 2 * self.word_emb_size).type(torch.FloatTensor))
 
+        contextMask, QuestionMask = self.getMask(instances, config)
         count = 0
         # Context_Char_Word_list = []
         # Query_Char_Word_list = []
@@ -181,9 +194,9 @@ class BiDAFModel(nn.Module):
         Context_Char_Word = self.hw_1(Context_Char_Word_list, self.is_train)
         Query_Char_Word = self.hw_1(Query_Char_Word_list, self.is_train)
 
-        h = self.lstm_x(Context_Char_Word)# add dimension for batch
-        h = h.unsqueeze(1)
-        u = self.lstm_q(Query_Char_Word)
+        contextEmbeddingLayerOut = self.lstm_x(Context_Char_Word)# add dimension for batch
+        contextEmbeddingLayerOut = contextEmbeddingLayerOut.unsqueeze(1)
+        questionEmbeddingLayerOut = self.lstm_q(Query_Char_Word)
 
         Context_Char_Word = Context_Char_Word.unsqueeze(1)
         Query_Char_Word = Query_Char_Word.unsqueeze(1)
@@ -192,7 +205,7 @@ class BiDAFModel(nn.Module):
         M = Context_Char_Word.size()[1]
         N = Context_Char_Word.size()[0]
 
-        attentionOutput = self.biattention(h, u, self.is_train, config)
+        attentionOutput = self.biattention(contextEmbeddingLayerOut, questionEmbeddingLayerOut, self.is_train, config, contextMask, QuestionMask)
 
         m1 = self.m1_bilstm(attentionOutput.view(N, M * JX, -1))
         m2 = self.m2_bilstm(m1.contiguous().view(N, M * JX, -1))
