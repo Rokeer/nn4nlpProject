@@ -107,3 +107,5 @@ ENV/
 # models
 models/
 data/glove/glove.6B.100d.txt
+
+Code/result.txt

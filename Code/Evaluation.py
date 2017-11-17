@@ -291,7 +291,7 @@ for sid in range(0, len(dev), config.DevBatchSize):
         for j in range(predictions[i][0], predictions[i][1]):
             text = text + instances[i][3][j]
         print (text)
-        dict[instances[0][10]] = text
+        dict[instances[i][10]] = text
         print (" ")
 
     loss += sampleLoss
