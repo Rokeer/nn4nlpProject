@@ -75,10 +75,10 @@ class Trainer(object):
         return start, end
 
 
-    def step(self, instances, config, isSearching=False, get_summary=False):
+    def step(self, instances, config, get_summary=False, isSearching=False,):
         # config = self.config
         # get input Sample
-        m_start, m_end, start_Logits, end_logits, mask = self.model.forward(instances, config)
+        m_start, m_end, start_Logits, end_logits = self.model.forward(instances, config)
         # pdb.set_trace()
         if usecuda:
             startVlas = Variable(torch.cuda.LongTensor([int(i[6]) for i in instances]))
@@ -96,6 +96,7 @@ class Trainer(object):
         if config.is_train == True:
             Finalloss.backward()
             self.optimizer.step()
+
         if isSearching:
             answers = self.beamSearch(m_start, m_end, mask, config.searchSize)
             return Finalloss.data[0], answers

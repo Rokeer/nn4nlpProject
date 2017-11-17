@@ -77,35 +77,28 @@ class BiDAFModel(nn.Module):
 
     def loadSentVectors(self, sentence):
         M = []
-        MaskM = []
         for i in sentence:
             vec = self.emb_mat[i]
             M.append(vec)
-            M.append(1)
-        return M, MaskM
+        return M
 
-    def padVectors(self, V, VMask, max_vector_size, embed_size):
+    def padVectors(self, V, max_vector_size, embed_size):
         l = max_vector_size - len(V)
         for i in range(l):
             V.append(embed_size * [0])
-            VMask.append(embed_size * [0])
-        return V, VMask
+        return V
 
     def padTensors(self, T, max_l, embed_size):
         l = max_l - T.size()[1]
         if l > 0:
             if usecuda:
-                TMask = Variable(torch.zeros(T.size()).type(torch.cuda.FloatTensor))
                 pad_T = Variable(torch.cuda.FloatTensor([[0] * embed_size]*l)).unsqueeze(0)
                 #print(T.size(),pad_T.size())
                 T = torch.cat((T, pad_T), 1).cuda()
-                TMask = torch.cat((TMask, pad_T), 1).cuda()
             else:
-                TMask = Variable(torch.zeros(T.size()).type(torch.FloatTensor))
                 pad_T = Variable(torch.zeros(l, embed_size)).unsqueeze(0)
                 T = torch.cat((T.type(FloatTensor), pad_T), 1)
-                TMask = torch.cat((TMask, pad_T), 1).cuda()
-        return T, TMask
+        return T
 
 
     def forward(self, instances, config):
@@ -114,20 +107,10 @@ class BiDAFModel(nn.Module):
                 torch.zeros(len(instances), config.MaxSentenceLength, 2 * self.word_emb_size).type(torch.cuda.FloatTensor))
             Query_Char_Word_list = Variable(
                 torch.zeros(len(instances), config.MaxQuestionLength, 2 * self.word_emb_size).type(torch.cuda.FloatTensor))
-            Context_Char_Word_Mask_list = Variable(
-                torch.zeros(len(instances), config.MaxQuestionLength, 2 * self.word_emb_size).type(
-                    torch.cuda.FloatTensor))
-            Query_Char_Word_Mask_list = Variable(
-                torch.zeros(len(instances), config.MaxQuestionLength, 2 * self.word_emb_size).type(
-                    torch.cuda.FloatTensor))
         else:
             Context_Char_Word_list = Variable(
                 torch.zeros(len(instances), config.MaxSentenceLength, 2 * self.word_emb_size).type(torch.FloatTensor))
             Query_Char_Word_list = Variable(
-                torch.zeros(len(instances), config.MaxQuestionLength, 2 * self.word_emb_size).type(torch.FloatTensor))
-            Context_Char_Word_Mask_list = Variable(
-                torch.zeros(len(instances), config.MaxQuestionLength, 2 * self.word_emb_size).type(torch.FloatTensor))
-            Query_Char_Word_Mask_list = Variable(
                 torch.zeros(len(instances), config.MaxQuestionLength, 2 * self.word_emb_size).type(torch.FloatTensor))
 
         count = 0
@@ -168,39 +151,27 @@ class BiDAFModel(nn.Module):
                 QueryChar_CNN = QueryChar_CNN.permute(0, 2, 1)
 
             # pad word tensors from CNN output
-            ContextChar_CNN_, ContextChar_CNN_Mask = self.padTensors(ContextChar_CNN, config.MaxSentenceLength, self.word_emb_size)
-            QueryChar_CNN_, QueryChar_CNN_Mask = self.padTensors(QueryChar_CNN, config.MaxQuestionLength, self.word_emb_size)
+            ContextChar_CNN_ = self.padTensors(ContextChar_CNN, config.MaxSentenceLength, self.word_emb_size)
+            QueryChar_CNN_ = self.padTensors(QueryChar_CNN, config.MaxQuestionLength, self.word_emb_size)
 
             # Word Embedding: Load glove vectors for sentence and pad with 0
-            ContextWord, ContextWordMask = self.loadSentVectors(Context)
-            QueryWord, QueryWordMask = self.loadSentVectors(Query)
-            ContextWord, ContextWordMask = np.array(self.padVectors(ContextWord, config.MaxSentenceLength, self.word_emb_size))
-            QueryWord, QueryWordMask = np.array(self.padVectors(QueryWord, config.MaxQuestionLength, self.word_emb_size))
+            ContextWord = self.loadSentVectors(Context)
+            QueryWord = self.loadSentVectors(Query)
+            ContextWord = np.array(self.padVectors(ContextWord, config.MaxSentenceLength, self.word_emb_size))
+            QueryWord = np.array(self.padVectors(QueryWord, config.MaxQuestionLength, self.word_emb_size))
 
             if usecuda:
                 ContextWord_tensor = Variable(torch.cuda.FloatTensor([ContextWord]))
                 QueryWord_tensor = Variable(torch.cuda.FloatTensor([QueryWord]))
-                ContextWord_Mask_tensor = Variable(torch.cuda.FloatTensor([ContextWordMask]))
-                QueryWord_Mask_tensor = Variable(torch.cuda.FloatTensor([QueryWordMask]))
             else:
                 ContextWord_tensor = Variable(FloatTensor([ContextWord]))
                 QueryWord_tensor = Variable(FloatTensor([QueryWord]))
-                ContextWord_Mask_tensor = Variable(torch.FloatTensor([ContextWordMask]))
-                QueryWord_Mask_tensor = Variable(torch.FloatTensor([QueryWordMask]))
 
             # Concatenate word vectors from word and character embeddings
             Context_Char_Word = torch.cat((ContextWord_tensor, ContextChar_CNN_), 2)
             Query_Char_Word = torch.cat((QueryWord_tensor, QueryChar_CNN_), 2)
-
-            Context_Char_Word_Mask = torch.cat((ContextWord_Mask_tensor, ContextChar_CNN_Mask), 2)
-            Query_Char_Word_Mask = torch.cat((QueryWord_Mask_tensor, QueryChar_CNN_Mask), 2)
-
             Context_Char_Word_list[count] = Context_Char_Word
             Query_Char_Word_list[count] = Query_Char_Word
-
-            Context_Char_Word_Mask_list[count] = Context_Char_Word_Mask
-            Query_Char_Word_Mask_list[count] = Query_Char_Word_Mask
-
             count = count + 1
         #xx = xx.unsqueeze(0)
         #qq = qq.unsqueeze(0)
@@ -208,7 +179,6 @@ class BiDAFModel(nn.Module):
         # Query_Char_Word = Variable(LongTensor(Query_Char_Word_list))
         Context_Char_Word = self.hw_1(Context_Char_Word_list, self.is_train)
         Query_Char_Word = self.hw_1(Query_Char_Word_list, self.is_train)
-
 
         h = self.lstm_x(Context_Char_Word)# add dimension for batch
         h = h.unsqueeze(1)
@@ -245,8 +215,7 @@ class BiDAFModel(nn.Module):
         start = flat_start.view(-1, M, JX)
         end = flat_end.view(-1, M, JX)
 
-        mask = Context_Char_Word_Mask_list.data[:, :, 0]
-        return start, end, o1, o3, mask
+        return start, end, o1, o3
 
     def getLoss(self,predict, true):
         #target = Variable(torch.LongTensor([int(true)]))
