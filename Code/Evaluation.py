@@ -280,6 +280,9 @@ for sid in range(0, len(dev), config.DevBatchSize):
     sampleLoss, predictions = BiDAFTrainer.step(instances, config, config.is_train, isSearching=True)
     sampleLoss = sampleLoss * len(instances)
 
+    print (instances[0][10])
+    print (instances[0][3])
+    print (instances[0][4])
     print (instances[0][5])
     text = ''
     for i in range(predictions[0][0], predictions[0][1]):
