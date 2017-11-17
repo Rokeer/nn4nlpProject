@@ -29,7 +29,7 @@ class Trainer(object):
 
             k = max_vector_size - len(m)
             for l in range(k):
-                m.extend(0)
+                m.extend([0])
             mask.append(m)
         return mask
 
