@@ -78,8 +78,8 @@ def read_train(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            if lineindex >= 500:
-               break
+            #if lineindex >= 500:
+            #   break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
@@ -305,7 +305,7 @@ for epoch in range(0, config.EPOCHS):
     for sid in range(0, len(dev), config.DevBatchSize):
 
         instances = dev[sid:sid + config.DevBatchSize]
-        print(instances[0][10])
+        #print(instances[0][10])
         if reverse:
             config.MaxSentenceLength = len(instances[0][0])
         else:
