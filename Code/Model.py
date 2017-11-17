@@ -106,12 +106,12 @@ class BiDAFModel(nn.Module):
             Context_Char_Word_list = Variable(
                 torch.zeros(len(instances), config.MaxSentenceLength, 2 * self.word_emb_size).type(torch.cuda.FloatTensor))
             Query_Char_Word_list = Variable(
-                torch.zeros(len(instances), self.MaxQuestionLength, 2 * self.word_emb_size).type(torch.cuda.FloatTensor))
+                torch.zeros(len(instances), config.MaxQuestionLength, 2 * self.word_emb_size).type(torch.cuda.FloatTensor))
         else:
             Context_Char_Word_list = Variable(
                 torch.zeros(len(instances), config.MaxSentenceLength, 2 * self.word_emb_size).type(torch.FloatTensor))
             Query_Char_Word_list = Variable(
-                torch.zeros(len(instances), self.MaxQuestionLength, 2 * self.word_emb_size).type(torch.FloatTensor))
+                torch.zeros(len(instances), config.MaxQuestionLength, 2 * self.word_emb_size).type(torch.FloatTensor))
 
         count = 0
         # Context_Char_Word_list = []
@@ -152,13 +152,13 @@ class BiDAFModel(nn.Module):
 
             # pad word tensors from CNN output
             ContextChar_CNN_ = self.padTensors(ContextChar_CNN, config.MaxSentenceLength, self.word_emb_size)
-            QueryChar_CNN_ = self.padTensors(QueryChar_CNN, self.MaxQuestionLength, self.word_emb_size)
+            QueryChar_CNN_ = self.padTensors(QueryChar_CNN, config.MaxQuestionLength, self.word_emb_size)
 
             # Word Embedding: Load glove vectors for sentence and pad with 0
             ContextWord = self.loadSentVectors(Context)
             QueryWord = self.loadSentVectors(Query)
             ContextWord = np.array(self.padVectors(ContextWord, config.MaxSentenceLength, self.word_emb_size))
-            QueryWord = np.array(self.padVectors(QueryWord, self.MaxQuestionLength, self.word_emb_size))
+            QueryWord = np.array(self.padVectors(QueryWord, config.MaxQuestionLength, self.word_emb_size))
 
             if usecuda:
                 ContextWord_tensor = Variable(torch.cuda.FloatTensor([ContextWord]))

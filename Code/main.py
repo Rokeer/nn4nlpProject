@@ -78,7 +78,7 @@ def read_train(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            if lineindex >= 500:
+            if lineindex >= 1000:
                break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
@@ -127,8 +127,8 @@ def read_dev(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            if lineindex >= 5000:
-                break
+            #if lineindex >= 10:
+            #    break
     #config.MaxSentenceLength = max_length
     #config.MaxQuestionLength = max_Query_Length
 
@@ -258,7 +258,7 @@ BiDAFTrainer = Trainer(config,BiDAF_Model)
 for epoch in range(0, config.EPOCHS):
     #############################DEV##############################3
     # Start Dev
-    if epoch % 5 == 1:
+    if epoch % 5 == 0:
         config.is_train = False
         BiDAF_Model.eval()
         loss = 0
@@ -274,6 +274,7 @@ for epoch in range(0, config.EPOCHS):
                 config.MaxSentenceLength = len(instances[0][0])
             else:
                 config.MaxSentenceLength = len(instances[len(instances) - 1][0])
+            config.MaxQuestionLength = max([len(instance[1]) for instance in instances])
             # print(config.MaxSentenceLength)
             sampleLoss = BiDAFTrainer.step(instances, config, config.is_train) * len(instances)
             loss += sampleLoss
@@ -307,6 +308,7 @@ for epoch in range(0, config.EPOCHS):
             config.MaxSentenceLength = len(instances[0][0])
         else:
             config.MaxSentenceLength = len(instances[len(instances)-1][0])
+        config.MaxQuestionLength = max([len(instance[1]) for instance in instances])
         # print(config.MaxSentenceLength)
         sampleLoss = BiDAFTrainer.step(instances, config, config.is_train) * len(instances)
         loss += sampleLoss
