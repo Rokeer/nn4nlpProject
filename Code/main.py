@@ -78,7 +78,7 @@ def read_train(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            if lineindex >= 1000:
+            if lineindex >= 500:
                break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
@@ -256,41 +256,6 @@ else:
 BiDAFTrainer = Trainer(config,BiDAF_Model)
 
 for epoch in range(0, config.EPOCHS):
-    #############################DEV##############################3
-    # Start Dev
-    if epoch % 5 == 0:
-        config.is_train = False
-        BiDAF_Model.eval()
-        loss = 0
-        numOfSamples = 0
-        numOfBatch = 0
-        start = time.time()
-        print("Start Dev:")
-        for sid in range(0, len(dev), config.DevBatchSize):
-
-            instances = dev[sid:sid + config.DevBatchSize]
-            print(instances[0][10])
-            if reverse:
-                config.MaxSentenceLength = len(instances[0][0])
-            else:
-                config.MaxSentenceLength = len(instances[len(instances) - 1][0])
-            config.MaxQuestionLength = max([len(instance[1]) for instance in instances])
-            # print(config.MaxSentenceLength)
-            sampleLoss = BiDAFTrainer.step(instances, config, config.is_train) * len(instances)
-            loss += sampleLoss
-            numOfBatch += 1
-            numOfSamples += len(instances)
-            if numOfSamples % 1000 == 0:
-                end = time.time()
-                print("Dev: " + str(numOfSamples) + ' / ' + str(len(dev)) + " , Current loss : " + str(
-                    loss / numOfSamples) + ", run time = " + str(end - start))
-                start = time.time()
-                # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
-                #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
-
-        loss /= numOfSamples
-        print('Dev Loss: ' + str(loss))
-
     ####################################################Train#########################################3
 
     config.is_train = True
@@ -316,7 +281,7 @@ for epoch in range(0, config.EPOCHS):
         numOfSamples+=len(instances)
         if numOfBatch % 1000 == 0:
             end = time.time()
-            print (str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : " + str(
+            print(str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : " + str(
                 loss / numOfSamples)+", run time = " + str(end - start))
             start = time.time()
             # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
@@ -327,7 +292,40 @@ for epoch in range(0, config.EPOCHS):
     torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'_nov16.pkl')
 
 
+    #############################DEV##############################3
+    # Start Dev
+    #if epoch % 5 == 0:
+    config.is_train = False
+    BiDAF_Model.eval()
+    loss = 0
+    numOfSamples = 0
+    numOfBatch = 0
+    start = time.time()
+    print("Start Dev:")
+    for sid in range(0, len(dev), config.DevBatchSize):
 
+        instances = dev[sid:sid + config.DevBatchSize]
+        print(instances[0][10])
+        if reverse:
+            config.MaxSentenceLength = len(instances[0][0])
+        else:
+            config.MaxSentenceLength = len(instances[len(instances) - 1][0])
+        config.MaxQuestionLength = max([len(instance[1]) for instance in instances])
+        # print(config.MaxSentenceLength)
+        sampleLoss = BiDAFTrainer.step(instances, config, config.is_train) * len(instances)
+        loss += sampleLoss
+        numOfBatch += 1
+        numOfSamples += len(instances)
+        if numOfSamples % 5000 == 0:
+            end = time.time()
+            print("Dev: " + str(numOfSamples) + ' / ' + str(len(dev)) + " , Current loss : " + str(
+                loss / numOfSamples) + ", run time = " + str(end - start))
+            start = time.time()
+            # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
+            #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
+
+    loss /= numOfSamples
+    print(str(epoch) + ' Dev Loss: ' + str(loss))
 
 
 
