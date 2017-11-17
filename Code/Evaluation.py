@@ -284,9 +284,9 @@ for sid in range(0, len(dev), config.DevBatchSize):
 
     for i in range(len(instances)):
         print (instances[i][10])
-        print (instances[i][3].encode('utf-8'))
-        print (instances[i][4].encode('utf-8'))
-        print (instances[i][5].encode('utf-8'))
+        # print (instances[i][3].encode('utf-8'))
+        # print (instances[i][4].encode('utf-8'))
+        # print (instances[i][5].encode('utf-8'))
         text = ''
         for j in range(predictions[i][0], predictions[i][1]):
             text = text + instances[i][3][j]
