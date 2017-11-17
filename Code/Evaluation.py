@@ -15,6 +15,7 @@ import os
 import pdb
 import codecs
 import pickle
+import json
 # import cloudpickle
 
 
@@ -267,6 +268,7 @@ numOfSamples = 0
 numOfBatch = 0
 start = time.time()
 print("Start Dev:")
+dict = {}
 for sid in range(0, len(dev), config.DevBatchSize):
 
     instances = dev[sid:sid + config.DevBatchSize]
@@ -280,15 +282,17 @@ for sid in range(0, len(dev), config.DevBatchSize):
     sampleLoss, predictions = BiDAFTrainer.step(instances, config, config.is_train, isSearching=True)
     sampleLoss = sampleLoss * len(instances)
 
-    print (instances[0][10])
-    print (instances[0][3])
-    print (instances[0][4])
-    print (instances[0][5])
-    text = ''
-    for i in range(predictions[0][0], predictions[0][1]):
-        text = text + instances[0][3][i]
-    print (text)
-    print (" ")
+    for i in range(len(instances)):
+        print (instances[i][10])
+        print (instances[i][3].encode('utf-8'))
+        print (instances[i][4].encode('utf-8'))
+        print (instances[i][5].encode('utf-8'))
+        text = ''
+        for j in range(predictions[i][0], predictions[i][1]):
+            text = text + instances[i][3][j]
+        print (text)
+        dict[instances[0][10]] = text
+        print (" ")
 
     loss += sampleLoss
     numOfBatch += 1
@@ -302,6 +306,10 @@ for sid in range(0, len(dev), config.DevBatchSize):
         #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
 
 loss /= numOfSamples
+
+with codecs.open('result.txt', 'w', encoding='utf-8') as outfile:
+    json.dump(dict, outfile)
+
 print('Dev Loss: ' + str(loss))
 
 
