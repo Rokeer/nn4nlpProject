@@ -245,8 +245,8 @@ else:
 
 
 BiDAF_Model = BiDAFModel(config)
-if os.path.isfile('../models/model_nov16.pkl'):
-    BiDAF_Model.load_state_dict(torch.load('../models/model_nov16.pkl', map_location=lambda storage, loc: storage))
+if os.path.isfile('../models/model_nov17.pkl'):
+    BiDAF_Model.load_state_dict(torch.load('../models/model_nov17.pkl', map_location=lambda storage, loc: storage))
     print('Loading model...')
 if usecuda:
     BiDAF_Model.cuda()
@@ -289,7 +289,7 @@ for epoch in range(0, config.EPOCHS):
 
     loss /= numOfSamples#len(train)
     print(str(loss))
-    torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'_nov16.pkl')
+    torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'_nov17.pkl')
 
 
     #############################DEV##############################3
