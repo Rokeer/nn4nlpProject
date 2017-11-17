@@ -43,7 +43,7 @@ class BiDAFModel(nn.Module):
         self.use_char_emb = config.use_char_emb
         self.cnn_dropout_keep_prob = config.cnn_dropout_keep_prob
         self.char_vocab_size = config.char_vocab_size
-        self.char_vocab_size = 1369
+        # self.char_vocab_size = 1369
         self.char_emb_size = config.char_emb_size
         self.emb_mat = config.emb_mat
         self.max_word_size = config.max_word_size

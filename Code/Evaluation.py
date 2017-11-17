@@ -89,6 +89,7 @@ def read_dev(configuration):
     #max_Query_Length = 0
     lineindex = 0
     # , encoding='utf-8'
+    pID = ""
     with codecs.open(config.dev_src_file, "r",encoding='utf-8') as f_src:
 
         for line_src in f_src:
@@ -100,35 +101,37 @@ def read_dev(configuration):
                 continue
             lineindex+=1
             [ID, context, question, answer, start, end] = line_src.split('\t')
-            # if ID != '5726a975708984140094cd38':
-            #     continue
-            sent_context = [w2i[x] for x in context.strip().split()]
-            for w in context.strip().split():
-                cxi = [c2i[c] for c in list(w)]
-                cx.append((cxi + config.max_word_size * [0])[:config.max_word_size])
+            if pID != ID:
+                pID = ID
+                # if ID != '5726a975708984140094cd38':
+                #     continue
+                sent_context = [w2i[x] for x in context.strip().split()]
+                for w in context.strip().split():
+                    cxi = [c2i[c] for c in list(w)]
+                    cx.append((cxi + config.max_word_size * [0])[:config.max_word_size])
 
-            sent_answers = [w2i[x] for x in answer.strip().split()]
+                sent_answers = [w2i[x] for x in answer.strip().split()]
 
 
-            sent_question = [w2i[x] for x in question.strip().split()]
-            for q in question.strip().split():
-                cqi = [c2i[c] for c in list(w)]
-                cq.append((cqi + config.max_word_size * [0])[:config.max_word_size])
-            #max_length = max(max_length, len(sent_context))
-            #max_Query_Length = max(max_Query_Length,len(sent_question))
-            try:
-                int_val = int(start)
-                int_val = int(end)
-            except ValueError:
-                # pdb.set_trace()
-                print("Failure w/ value " + ID)
-            if int(end) >= len(sent_context):
-                print ("Wrong:" + ID)
-            if ID == '56cec3e8aab44d1400b88a02':
-                continue
-            yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            # if lineindex >= 10:
-            #    break
+                sent_question = [w2i[x] for x in question.strip().split()]
+                for q in question.strip().split():
+                    cqi = [c2i[c] for c in list(w)]
+                    cq.append((cqi + config.max_word_size * [0])[:config.max_word_size])
+                #max_length = max(max_length, len(sent_context))
+                #max_Query_Length = max(max_Query_Length,len(sent_question))
+                try:
+                    int_val = int(start)
+                    int_val = int(end)
+                except ValueError:
+                    # pdb.set_trace()
+                    print("Failure w/ value " + ID)
+                if int(end) >= len(sent_context):
+                    print ("Wrong:" + ID)
+                if ID == '56cec3e8aab44d1400b88a02':
+                    continue
+                yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
+                # if lineindex >= 10:
+                #    break
     #config.MaxSentenceLength = max_length
     #config.MaxQuestionLength = max_Query_Length
 
@@ -264,9 +267,9 @@ numOfSamples = 0
 numOfBatch = 0
 start = time.time()
 print("Start Dev:")
-for sid in range(0, len(train), config.DevBatchSize):
+for sid in range(0, len(dev), config.DevBatchSize):
 
-    instances = train[sid:sid + config.DevBatchSize]
+    instances = dev[sid:sid + config.DevBatchSize]
     # print(instances[0][10])
     if reverse:
         config.MaxSentenceLength = len(instances[0][0])
