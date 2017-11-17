@@ -229,6 +229,11 @@ class BiDAFModel(nn.Module):
         start = flat_start.view(-1, M, JX)
         end = flat_end.view(-1, M, JX)
 
+        #Mask Logits before the loss
+        contextMask = contextMask.squeeze(1)
+        o1.data = torch.add(o1.data, (~contextMask).float() * -1e20)
+        o3.data = torch.add(o3.data, (~contextMask).float() * -1e20)
+
         return start, end, o1, o3
 
     def getLoss(self,predict, true):
