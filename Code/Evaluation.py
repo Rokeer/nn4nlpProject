@@ -127,8 +127,8 @@ def read_dev(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            if lineindex >= 10:
-               break
+            # if lineindex >= 10:
+            #    break
     #config.MaxSentenceLength = max_length
     #config.MaxQuestionLength = max_Query_Length
 
@@ -282,6 +282,7 @@ for sid in range(0, len(train), config.DevBatchSize):
     for i in range(predictions[0][0], predictions[0][1]):
         text = text + instances[0][3][i]
     print (text)
+    print (" ")
 
     loss += sampleLoss
     numOfBatch += 1
