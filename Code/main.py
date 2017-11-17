@@ -104,21 +104,14 @@ def read_dev(configuration):
             #     continue
             sent_context = [w2i[x] for x in context.strip().split()]
             for w in context.strip().split():
-                for c in w:
-                    char_counter[c] += 1
                 cxi = [c2i[c] for c in list(w)]
                 cx.append((cxi + config.max_word_size * [0])[:config.max_word_size])
 
             sent_answers = [w2i[x] for x in answer.strip().split()]
-            for w in answer.strip().split():
-                for c in w:
-                    char_counter[c] += 1
 
 
             sent_question = [w2i[x] for x in question.strip().split()]
             for q in question.strip().split():
-                for c in q:
-                    char_counter[c] += 1
                 cqi = [c2i[c] for c in list(w)]
                 cq.append((cqi + config.max_word_size * [0])[:config.max_word_size])
             #max_length = max(max_length, len(sent_context))
@@ -217,7 +210,7 @@ else:
 
     word_vocab_size = len(w2i)
     print(len(c2i))
-    config.char_vocab_size = len(c2i)
+    config.char_vocab_size = len(c2i) + 1
     dev = list(read_dev(config.dev_src_file))
     if reverse:
         dev.sort(key=lambda x: len(x[0]), reverse=reverse)
@@ -233,22 +226,22 @@ else:
 
 
     ######################## Saving Everything so far###############################
-    # with open('../objects/emb_mat', 'wb') as f:
-    #     cloudpickle.dump(emb_mat, f)
-    # with open('../objects/config', 'wb') as f:
-    #    cloudpickle.dump(config, f)
-    # with open('../objects/dev', 'wb') as f:
-    #     cloudpickle.dump(dev, f)
-    # with open('../objects/train', 'wb') as f:
-    #     cloudpickle.dump(train, f)
-    # with open('../objects/w2i', 'wb') as f:
-    #     cloudpickle.dump(w2i, f)
-    # with open('../objects/c2i', 'wb') as f:
-    #     cloudpickle.dump(c2i, f)
-    # with open('../objects/word2vec_dict', 'wb') as f:
-    #     cloudpickle.dump(word2vec_dict, f)
-    # with open('../objects/widx2vec_dict', 'wb') as f:
-    #     cloudpickle.dump(widx2vec_dict, f)
+    with open('../objects/emb_mat', 'wb') as f:
+        cloudpickle.dump(emb_mat, f)
+    with open('../objects/config', 'wb') as f:
+       cloudpickle.dump(config, f)
+    with open('../objects/dev', 'wb') as f:
+        cloudpickle.dump(dev, f)
+    with open('../objects/train', 'wb') as f:
+        cloudpickle.dump(train, f)
+    with open('../objects/w2i', 'wb') as f:
+        cloudpickle.dump(w2i, f)
+    with open('../objects/c2i', 'wb') as f:
+        cloudpickle.dump(c2i, f)
+    with open('../objects/word2vec_dict', 'wb') as f:
+        cloudpickle.dump(word2vec_dict, f)
+    with open('../objects/widx2vec_dict', 'wb') as f:
+        cloudpickle.dump(widx2vec_dict, f)
 
 
 BiDAF_Model = BiDAFModel(config)
@@ -265,7 +258,7 @@ BiDAFTrainer = Trainer(config,BiDAF_Model)
 for epoch in range(0, config.EPOCHS):
     #############################DEV##############################3
     # Start Dev
-    if epoch % 5 == 0:
+    if epoch % 5 == 1:
         config.is_train = False
         BiDAF_Model.eval()
         loss = 0
@@ -294,7 +287,7 @@ for epoch in range(0, config.EPOCHS):
                 # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
                 #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
 
-        loss /= len(numOfSamples)
+        loss /= numOfSamples
         print('Dev Loss: ' + str(loss))
 
     ####################################################Train#########################################3
@@ -327,7 +320,7 @@ for epoch in range(0, config.EPOCHS):
             # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
             #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
 
-    loss /= len(train)
+    loss /= numOfSamples#len(train)
     print(str(loss))
     torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'_nov16.pkl')
 
