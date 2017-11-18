@@ -249,8 +249,8 @@ else:
 
 
 BiDAF_Model = BiDAFModel(config)
-if os.path.isfile('../models/model_nov16.pkl'):
-    BiDAF_Model.load_state_dict(torch.load('../models/model_nov16.pkl', map_location=lambda storage, loc: storage))
+if os.path.isfile('../models/All_Adam_Masking_nov18.pkl'):
+    BiDAF_Model.load_state_dict(torch.load('../models/All_Adam_Masking_nov18.pkl', map_location=lambda storage, loc: storage))
     print('Loading model...')
 if usecuda:
     BiDAF_Model.cuda()
