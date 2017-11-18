@@ -20,8 +20,8 @@ class Trainer(object):
         # assert isinstance(model, Model)
         # self.config = config
         self.model = model
-        # self.optimizer = O.Adadelta(self.model.parameters(),config.init_learningRate)
-        self.optimizer = O.Adam(self.model.parameters())
+        self.optimizer = O.Adadelta(self.model.parameters(),config.init_learningRate)
+        # self.optimizer = O.Adam(self.model.parameters())
         # self.optimizer = O.SGD(self.model.parameters(), lr = 0.01)
 
     def padVectors(self, instances, max_vector_size):
@@ -116,7 +116,8 @@ class Trainer(object):
         Finalloss = startLoss + endLoss#.backward()
         if config.is_train == True:
             Finalloss.backward()
-        self.optimizer.step()
+            torch.nn.utils.clip_grad_norm(self.model.parameters(), 0.5)
+            self.optimizer.step()
 
         if isSearching:
             answers = self.beamSearch(m_start, m_end, config.searchSize, instances, config)
