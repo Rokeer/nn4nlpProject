@@ -15,6 +15,8 @@ import os
 import pdb
 import codecs
 import pickle
+import evaluate
+import json
 # import cloudpickle
 
 
@@ -78,8 +80,8 @@ def read_train(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            if lineindex >= 15000:
-              break
+            # if lineindex >= 15000:
+            #   break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
@@ -127,7 +129,7 @@ def read_dev(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            if lineindex >= 3000:
+            if lineindex >= 10:
                 break
     #config.MaxSentenceLength = max_length
     #config.MaxQuestionLength = max_Query_Length
@@ -257,7 +259,7 @@ BiDAFTrainer = Trainer(config,BiDAF_Model)
 
 for epoch in range(0, config.EPOCHS):
     ####################################################Train#########################################3
-
+    writeResult = codecs.open(str(epoch) + 'prediction_results.txt', 'w', encoding='utf-8')
     config.is_train = True
     BiDAF_Model.train()
     loss = 0
@@ -265,6 +267,8 @@ for epoch in range(0, config.EPOCHS):
     numOfSamples = 0
     numOfBatch = 0
     start = time.time()
+    s = ''
+    dict = {}
     # for instance in train:
     print("Start Training:" + str(epoch))
     for sid in range(0, len(train), config.BatchSize):
@@ -275,8 +279,21 @@ for epoch in range(0, config.EPOCHS):
             config.MaxSentenceLength = len(instances[len(instances)-1][0])
         config.MaxQuestionLength = max([len(instance[1]) for instance in instances])
         # print(config.MaxSentenceLength)
-        sampleLoss = BiDAFTrainer.step(instances, config, config.is_train) * len(instances)
+        sampleLoss, predictions = BiDAFTrainer.step(instances, config, config.is_train, isSearching=True)
+        sampleLoss = sampleLoss * len(instances)
         loss += sampleLoss
+
+        for i in range(len(instances)):
+            s = s + instances[i][5] + "\t"
+            text = ''
+            cnt = instances[i][3].split()
+            for j in range(predictions[i][0], predictions[i][1]) + 1:
+                text = text + cnt[j] + " "
+            # print (text)
+            text = text.strip()
+            dict[instances[i][10]] = text
+            s = s + text + "\n"
+
         numOfBatch += 1
         numOfSamples+=len(instances)
         if numOfBatch % 1000 == 0:
@@ -289,43 +306,47 @@ for epoch in range(0, config.EPOCHS):
 
     loss /= numOfSamples#len(train)
     print(str(loss))
-    torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'_nov17.pkl')
-
-
+    torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'_nov18.pkl')
+    with codecs.open(str(epoch) + 'prediction.txt', 'w', encoding='utf-8') as outfile:
+        json.dump(dict, outfile)
+    writeResult.write(s)
+    writeResult.flush()
+    writeResult.close()
+    evaluate.eva(str(epoch) + 'prediction.txt', '../data/train-v1.1.json')
     #############################DEV##############################3
     # Start Dev
     #if epoch % 5 == 0:
-    config.is_train = False
-    BiDAF_Model.eval()
-    loss = 0
-    numOfSamples = 0
-    numOfBatch = 0
-    start = time.time()
-    print("Start Dev:")
-    for sid in range(0, len(dev), config.DevBatchSize):
-
-        instances = dev[sid:sid + config.DevBatchSize]
-        #print(instances[0][10])
-        if reverse:
-            config.MaxSentenceLength = len(instances[0][0])
-        else:
-            config.MaxSentenceLength = len(instances[len(instances) - 1][0])
-        config.MaxQuestionLength = max([len(instance[1]) for instance in instances])
-        # print(config.MaxSentenceLength)
-        sampleLoss = BiDAFTrainer.step(instances, config, config.is_train) * len(instances)
-        loss += sampleLoss
-        numOfBatch += 1
-        numOfSamples += len(instances)
-        if numOfSamples % 5000 == 0:
-            end = time.time()
-            print("Dev: " + str(numOfSamples) + ' / ' + str(len(dev)) + " , Current loss : " + str(
-                loss / numOfSamples) + ", run time = " + str(end - start))
-            start = time.time()
-            # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
-            #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
-
-    loss /= numOfSamples
-    print(str(epoch) + ' Dev Loss: ' + str(loss))
+    # config.is_train = False
+    # BiDAF_Model.eval()
+    # loss = 0
+    # numOfSamples = 0
+    # numOfBatch = 0
+    # start = time.time()
+    # print("Start Dev:")
+    # for sid in range(0, len(dev), config.DevBatchSize):
+    #
+    #     instances = dev[sid:sid + config.DevBatchSize]
+    #     #print(instances[0][10])
+    #     if reverse:
+    #         config.MaxSentenceLength = len(instances[0][0])
+    #     else:
+    #         config.MaxSentenceLength = len(instances[len(instances) - 1][0])
+    #     config.MaxQuestionLength = max([len(instance[1]) for instance in instances])
+    #     # print(config.MaxSentenceLength)
+    #     sampleLoss = BiDAFTrainer.step(instances, config, config.is_train) * len(instances)
+    #     loss += sampleLoss
+    #     numOfBatch += 1
+    #     numOfSamples += len(instances)
+    #     if numOfSamples % 5000 == 0:
+    #         end = time.time()
+    #         print("Dev: " + str(numOfSamples) + ' / ' + str(len(dev)) + " , Current loss : " + str(
+    #             loss / numOfSamples) + ", run time = " + str(end - start))
+    #         start = time.time()
+    #         # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
+    #         #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
+    #
+    # loss /= numOfSamples
+    # print(str(epoch) + ' Dev Loss: ' + str(loss))
 
 
 
