@@ -198,10 +198,10 @@ else:
 
 
     train = list(read_train(config))
-    if reverse:
-        train.sort(key=lambda x: len(x[0]), reverse=reverse)
-    else:
-        train.sort(key=lambda x: len(x[0]))
+    # if reverse:
+    #     train.sort(key=lambda x: len(x[0]), reverse=reverse)
+    # else:
+    #     train.sort(key=lambda x: len(x[0]))
 
     # train = train[0:0 + config.BatchSize]
     print(str(config.MaxSentenceLength))
@@ -214,10 +214,10 @@ else:
     print(len(c2i))
     config.char_vocab_size = len(c2i) + 1
     dev = list(read_dev(config.dev_src_file))
-    if reverse:
-        dev.sort(key=lambda x: len(x[0]), reverse=reverse)
-    else:
-        dev.sort(key=lambda x: len(x[0]))
+    # if reverse:
+    #     dev.sort(key=lambda x: len(x[0]), reverse=reverse)
+    # else:
+    #     dev.sort(key=lambda x: len(x[0]))
 
     word2vec_dict = get_GLOVE_word2vec(config.glove_path, config.GloveEmbeddingSize)
     widx2vec_dict = {w2i[word]: vec for word, vec in word2vec_dict.items() if word in w2i}
