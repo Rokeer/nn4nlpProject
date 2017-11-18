@@ -292,7 +292,7 @@ for sid in range(0, len(dev), config.DevBatchSize):
         s = s + instances[i][5] + "\t"
         text = ''
         cnt = instances[i][3].split()
-        for j in range(predictions[i][0], predictions[i][1]):
+        for j in range(predictions[i][0], predictions[i][1])+1:
             text = text + cnt[j] + " "
         # print (text)
         text = text.strip()
