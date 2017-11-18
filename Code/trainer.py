@@ -116,7 +116,7 @@ class Trainer(object):
         Finalloss = startLoss + endLoss#.backward()
         if config.is_train == True:
             Finalloss.backward()
-            torch.nn.utils.clip_grad_norm(self.model.parameters(), 0.5)
+            # torch.nn.utils.clip_grad_norm(self.model.parameters(), 0.5)
             self.optimizer.step()
 
         if isSearching:
