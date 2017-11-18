@@ -24,6 +24,6 @@ class Configuration():
         self.outputDropout = 0.2
         self.is_train = True
         self.emb_mat = None
-        self.init_learningRate = 1.0
+        self.init_learningRate = 0.5
         self.DevBatchSize = 5
         self.searchSize = 10
