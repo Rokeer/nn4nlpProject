@@ -25,7 +25,7 @@ else:
     usecuda = False
 
 LoadFiles = False
-reverse = True
+reverse = False
 if usecuda:
     print("Using Cuda")
 
@@ -271,9 +271,9 @@ print("Start Dev:")
 dict = {}
 s = ""
 writeResult = codecs.open('prediction.txt','w',encoding='utf-8')
-for sid in range(0, len(dev), config.DevBatchSize):
+for sid in range(0, len(train), config.DevBatchSize):
 
-    instances = dev[sid:sid + config.DevBatchSize]
+    instances = train[sid:sid + config.DevBatchSize]
     # print(instances[0][10])
     if reverse:
         config.MaxSentenceLength = len(instances[0][0])
@@ -308,7 +308,7 @@ for sid in range(0, len(dev), config.DevBatchSize):
     numOfSamples += len(instances)
     if numOfSamples % 5000 == 0:
         end = time.time()
-        print("Dev: " + str(numOfSamples) + ' / ' + str(len(dev)) + " , Current loss : " + str(
+        print("Dev: " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : " + str(
             loss / numOfSamples) + ", run time = " + str(end - start))
         start = time.time()
         # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
