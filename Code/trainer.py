@@ -63,9 +63,10 @@ class Trainer(object):
                         max_start_ind = m_start_index[i][m]
                         max_end_ind = n
 
-            start, end = self.findWordPosition(instances[i][3], max_start_ind, max_end_ind)
-            answers.append([start, end])
+            # start, end = self.findWordPosition(instances[i][3], max_start_ind, max_end_ind)
+            answers.append([max_start_ind, max_end_ind])
         return answers
+
 
     def findWordPosition(self, text, max_start_ind, max_end_ind):
         ttext = text.split()

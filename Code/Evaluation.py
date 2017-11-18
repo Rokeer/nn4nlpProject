@@ -131,7 +131,7 @@ def read_dev(configuration):
                 if ID == '56cec3e8aab44d1400b88a02':
                     continue
                 yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-                # if lineindex >= 10:
+                # if lineindex >= 50:
                 #    break
     #config.MaxSentenceLength = max_length
     #config.MaxQuestionLength = max_Query_Length
@@ -291,9 +291,11 @@ for sid in range(0, len(dev), config.DevBatchSize):
         # print (instances[i][5])
         s = s + instances[i][5] + "\t"
         text = ''
+        cnt = instances[i][3].split()
         for j in range(predictions[i][0], predictions[i][1]):
-            text = text + instances[i][3][j]
+            text = text + cnt[j] + " "
         # print (text)
+        text = text.strip()
         dict[instances[i][10]] = text
         s = s + text + "\n"
         writeResult.write(s)
