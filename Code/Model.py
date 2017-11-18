@@ -119,14 +119,14 @@ class BiDAFModel(nn.Module):
     def forward(self, instances, config):
         if usecuda:
             Context_Char_Word_list = Variable(
-                torch.zeros(len(instances), config.MaxSentenceLength, 2 * self.word_emb_size).type(torch.cuda.FloatTensor))
+                torch.zeros(len(instances), config.MaxSentenceLength, self.input_size).type(torch.cuda.FloatTensor))
             Query_Char_Word_list = Variable(
-                torch.zeros(len(instances), config.MaxQuestionLength, 2 * self.word_emb_size).type(torch.cuda.FloatTensor))
+                torch.zeros(len(instances), config.MaxQuestionLength, self.input_size).type(torch.cuda.FloatTensor))
         else:
             Context_Char_Word_list = Variable(
-                torch.zeros(len(instances), config.MaxSentenceLength, 2 * self.word_emb_size).type(torch.FloatTensor))
+                torch.zeros(len(instances), config.MaxSentenceLength, self.input_size).type(torch.FloatTensor))
             Query_Char_Word_list = Variable(
-                torch.zeros(len(instances), config.MaxQuestionLength, 2 * self.word_emb_size).type(torch.FloatTensor))
+                torch.zeros(len(instances), config.MaxQuestionLength, self.input_size).type(torch.FloatTensor))
 
         contextMask, QuestionMask = self.getMask(instances, config)
         count = 0
