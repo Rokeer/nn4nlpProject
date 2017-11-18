@@ -25,7 +25,7 @@ else:
     usecuda = False
 
 LoadFiles = False
-reverse = False
+reverse = True
 if usecuda:
     print("Using Cuda")
 
