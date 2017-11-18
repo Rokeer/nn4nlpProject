@@ -13,7 +13,7 @@ class Configuration():
         self.MaxQuestionLength = 20
         self.MaxNumberOfSentences = 1
         self.max_word_size = 16
-        self.BatchSize = 5
+        self.BatchSize = 20
         self.train_src_file = "../data/train_lines"
         self.dev_src_file = "../data/dev_lines"
         self.glove_path = "../data/glove/"
@@ -25,5 +25,5 @@ class Configuration():
         self.is_train = True
         self.emb_mat = None
         self.init_learningRate = 0.5
-        self.DevBatchSize = 5
+        self.DevBatchSize = 20
         self.searchSize = 10
