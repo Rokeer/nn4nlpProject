@@ -273,10 +273,10 @@ for epoch in range(0, config.EPOCHS):
     print("Start Training:" + str(epoch))
     for sid in range(0, len(train), config.BatchSize):
         instances = train[sid:sid + config.BatchSize]
-        if reverse:
-            config.MaxSentenceLength = len(instances[0][0])
-        else:
-            config.MaxSentenceLength = len(instances[len(instances)-1][0])
+        # if reverse:
+        #     config.MaxSentenceLength = len(instances[0][0])
+        # else:
+        #     config.MaxSentenceLength = len(instances[len(instances)-1][0])
         config.MaxQuestionLength = max([len(instance[1]) for instance in instances])
         # print(config.MaxSentenceLength)
         sampleLoss, predictions = BiDAFTrainer.step(instances, config, config.is_train, isSearching=True)
