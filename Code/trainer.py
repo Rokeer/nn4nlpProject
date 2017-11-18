@@ -20,7 +20,8 @@ class Trainer(object):
         # assert isinstance(model, Model)
         # self.config = config
         self.model = model
-        self.optimizer = O.Adadelta(self.model.parameters(),config.init_learningRate)
+        # self.optimizer = O.Adadelta(self.model.parameters(),config.init_learningRate)
+        self.optimizer = O.Adam(self.model.parameters())
 
     def padVectors(self, instances, max_vector_size):
         mask = []
