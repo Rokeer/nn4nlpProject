@@ -78,8 +78,8 @@ def read_train(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            # if lineindex >= 500:
-            #   break
+            if lineindex >= 15000:
+              break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
@@ -98,7 +98,7 @@ def read_dev(configuration):
             line_src = line_src.replace('\n','').replace('\r','').strip()
             if line_src == "":
                 continue
-            lineindex+=1
+            lineindex += 1
             [ID, context, question, answer, start, end] = line_src.split('\t')
             # if ID != '5726a975708984140094cd38':
             #     continue
@@ -127,8 +127,8 @@ def read_dev(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            #if lineindex >= 10:
-            #    break
+            if lineindex >= 3000:
+                break
     #config.MaxSentenceLength = max_length
     #config.MaxQuestionLength = max_Query_Length
 
