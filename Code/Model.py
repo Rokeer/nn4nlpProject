@@ -48,7 +48,9 @@ class BiDAFModel(nn.Module):
         self.max_word_size = config.max_word_size
         self.padding = config.padding
 
-        self.hw_1 = HighwayNetwork(config.numOfHighwayLayers, config.hidden_size)
+        self.CNNEmbeddingSize = config.CNNEmbeddingSize
+
+        self.hw_1 = HighwayNetwork(config.numOfHighwayLayers, self.input_size)
 
         self.lstm_x = BiModeling(self.input_size, self.hidden_size, self.lstm_layers)
         self.lstm_q = BiModeling(self.input_size, self.hidden_size, self.lstm_layers)
@@ -165,8 +167,8 @@ class BiDAFModel(nn.Module):
                 QueryChar_CNN = QueryChar_CNN.permute(0, 2, 1)
 
             # pad word tensors from CNN output
-            ContextChar_CNN_ = self.padTensors(ContextChar_CNN, config.MaxSentenceLength, self.word_emb_size)
-            QueryChar_CNN_ = self.padTensors(QueryChar_CNN, config.MaxQuestionLength, self.word_emb_size)
+           #  ContextChar_CNN_ = self.padTensors(ContextChar_CNN, config.MaxSentenceLength, self.word_emb_size)
+            # QueryChar_CNN_ = self.padTensors(QueryChar_CNN, config.MaxQuestionLength, self.word_emb_size)
 
             # Word Embedding: Load glove vectors for sentence and pad with 0
             ContextWord = self.loadSentVectors(Context)
@@ -182,8 +184,15 @@ class BiDAFModel(nn.Module):
                 QueryWord_tensor = Variable(FloatTensor([QueryWord]))
 
             # Concatenate word vectors from word and character embeddings
-            Context_Char_Word = torch.cat((ContextWord_tensor, ContextChar_CNN_), 2)
-            Query_Char_Word = torch.cat((QueryWord_tensor, QueryChar_CNN_), 2)
+            if self.use_char_emb:
+                ContextChar_CNN_ = self.padTensors(ContextChar_CNN, config.MaxSentenceLength, self.word_emb_size)
+                QueryChar_CNN_ = self.padTensors(QueryChar_CNN, config.MaxQuestionLength, self.word_emb_size)
+                Context_Char_Word = torch.cat((ContextWord_tensor, ContextChar_CNN_), 2)
+                Query_Char_Word = torch.cat((QueryWord_tensor, QueryChar_CNN_), 2)
+
+            else:
+                Context_Char_Word = ContextWord_tensor
+                Query_Char_Word = QueryWord_tensor
             Context_Char_Word_list[count] = Context_Char_Word
             Query_Char_Word_list[count] = Query_Char_Word
             count = count + 1
