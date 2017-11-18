@@ -269,6 +269,8 @@ numOfBatch = 0
 start = time.time()
 print("Start Dev:")
 dict = {}
+s = ""
+writeResult = codecs.open('prediction.txt','w',encoding='utf-8')
 for sid in range(0, len(dev), config.DevBatchSize):
 
     instances = dev[sid:sid + config.DevBatchSize]
@@ -287,11 +289,16 @@ for sid in range(0, len(dev), config.DevBatchSize):
         # print (instances[i][3])
         # print (instances[i][4])
         # print (instances[i][5])
+        s = s + instances[i][5] + "\t"
         text = ''
         for j in range(predictions[i][0], predictions[i][1]):
             text = text + instances[i][3][j]
         # print (text)
         dict[instances[i][10]] = text
+        s = s + text + "\n"
+        writeResult.write(s)
+        writeResult.flush()
+        s = ""
         # print (" ")
 
     loss += sampleLoss
@@ -306,9 +313,11 @@ for sid in range(0, len(dev), config.DevBatchSize):
         #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
 
 loss /= numOfSamples
-
+writeResult.close()
 with codecs.open('result.txt', 'w', encoding='utf-8') as outfile:
     json.dump(dict, outfile)
+
+
 
 print('Dev Loss: ' + str(loss))
 

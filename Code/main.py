@@ -78,7 +78,7 @@ def read_train(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            #if lineindex >= 500:
+            # if lineindex >= 500:
             #   break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
