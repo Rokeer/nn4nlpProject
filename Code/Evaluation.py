@@ -256,7 +256,7 @@ else:
 
 
 BiDAF_Model = BiDAFModel(config)
-if os.path.isfile('../models/No_char_nov18.pkl'):
+if os.path.isfile('../models/aNo_char_nov18.pkl'):
     # BiDAF_Model.load_state_dict(torch.load('../models/No_char_nov18.pkl', map_location=lambda storage, loc: storage))
     BiDAF_Model.load_state_dict(torch.load('../models/No_char_nov18.pkl'))
     print('Loading model...')
@@ -314,7 +314,7 @@ for sid in range(0, len(dev), config.DevBatchSize):
     loss += sampleLoss
     numOfBatch += 1
     numOfSamples += len(instances)
-    if numOfSamples % 5000 == 0:
+    if numOfSamples % 5 == 0:
         end = time.time()
         print("Dev: " + str(numOfSamples) + ' / ' + str(len(dev)) + " , Current loss : " + str(
             loss / numOfSamples) + ", run time = " + str(end - start))
@@ -377,7 +377,7 @@ for sid in range(0, len(dev2), config.DevBatchSize):
     loss += sampleLoss
     numOfBatch += 1
     numOfSamples += len(instances)
-    if numOfSamples % 5000 == 0:
+    if numOfSamples % 5 == 0:
         end = time.time()
         print("Dev2: " + str(numOfSamples) + ' / ' + str(len(dev2)) + " , Current loss : " + str(
             loss / numOfSamples) + ", run time = " + str(end - start))
