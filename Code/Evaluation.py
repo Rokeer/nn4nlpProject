@@ -94,6 +94,7 @@ def read_dev(configuration):
     pID = ""
     with codecs.open(config.dev_src_file, "r",encoding='utf-8') as f_src:
 
+
         for line_src in f_src:
             cx = []
             cq = []
