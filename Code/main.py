@@ -171,60 +171,65 @@ def timeSince(since, percent):
     return '%s (- %s)' % (asMinutes(s), asMinutes(rs))
 
 
+# if LoadFiles == True:
+#     ######################## Loading Everything###############################33
+#     with open('../objects/emb_mat', 'rb') as f:
+#         emb_mat = pickle.load(f)
+#     with open('../objects/w2i', 'rb') as f:
+#         w2i = pickle.load(f)
+#     with open('../objects/c2i', 'rb') as f:
+#         c2i = pickle.load(f)
+#     with open('../objects/dev', 'rb') as f:
+#         dev = pickle.load(f)
+#     with open('./objects/train', 'rb') as f:
+#         train = pickle.load(f)
+#     with open('../objects/word2vec_dict', 'rb') as f:
+#         word2vec_dict = pickle.load(f)
+#     with open('../objects/widx2vec_dict', 'rb') as f:
+#         widx2vec_dict = pickle.load(f)
+#     with open('../objects/config', 'rb') as f:
+#         config = pickle.load(f)
+
+#else:
+config = Configuration()
+w2i = defaultdict(lambda: len(w2i))
+c2i = defaultdict(lambda: len(c2i) + 1)
+char_counter = Counter()
+
+
+train = list(read_train(config))
+if reverse:
+    train.sort(key=lambda x: len(x[0]), reverse=reverse)
+else:
+    train.sort(key=lambda x: len(x[0]))
+
+# train = train[0:0 + config.BatchSize]
+print(str(config.MaxSentenceLength))
+unk_src = w2i["<unk>"]
+w2i = defaultdict(lambda: unk_src, w2i)
+unk_char_src = c2i["<unk>"]
+c2i = defaultdict(lambda: unk_char_src, c2i)
+
+word_vocab_size = len(w2i)
+print(len(c2i))
+config.char_vocab_size = len(c2i) + 1
+dev = list(read_dev(config.dev_src_file))
+if reverse:
+    dev.sort(key=lambda x: len(x[0]), reverse=reverse)
+else:
+    dev.sort(key=lambda x: len(x[0]))
+
+word2vec_dict = get_GLOVE_word2vec(config.glove_path, config.GloveEmbeddingSize)
+widx2vec_dict = {w2i[word]: vec for word, vec in word2vec_dict.items() if word in w2i}
+
 if LoadFiles == True:
-    ######################## Loading Everything###############################33
     with open('../objects/emb_mat', 'rb') as f:
         emb_mat = pickle.load(f)
-    with open('../objects/w2i', 'rb') as f:
-        w2i = pickle.load(f)
-    with open('../objects/c2i', 'rb') as f:
-        c2i = pickle.load(f)
-    with open('../objects/dev', 'rb') as f:
-        dev = pickle.load(f)
-    with open('./objects/train', 'rb') as f:
-        train = pickle.load(f)
-    with open('../objects/word2vec_dict', 'rb') as f:
-        word2vec_dict = pickle.load(f)
-    with open('../objects/widx2vec_dict', 'rb') as f:
-        widx2vec_dict = pickle.load(f)
-    with open('../objects/config', 'rb') as f:
-        config = pickle.load(f)
-
 else:
-    config = Configuration()
-    w2i = defaultdict(lambda: len(w2i))
-    c2i = defaultdict(lambda: len(c2i) + 1)
-    char_counter = Counter()
-
-
-    train = list(read_train(config))
-    if reverse:
-        train.sort(key=lambda x: len(x[0]), reverse=reverse)
-    else:
-        train.sort(key=lambda x: len(x[0]))
-
-    # train = train[0:0 + config.BatchSize]
-    print(str(config.MaxSentenceLength))
-    unk_src = w2i["<unk>"]
-    w2i = defaultdict(lambda: unk_src, w2i)
-    unk_char_src = c2i["<unk>"]
-    c2i = defaultdict(lambda: unk_char_src, c2i)
-
-    word_vocab_size = len(w2i)
-    print(len(c2i))
-    config.char_vocab_size = len(c2i) + 1
-    dev = list(read_dev(config.dev_src_file))
-    if reverse:
-        dev.sort(key=lambda x: len(x[0]), reverse=reverse)
-    else:
-        dev.sort(key=lambda x: len(x[0]))
-
-    word2vec_dict = get_GLOVE_word2vec(config.glove_path, config.GloveEmbeddingSize)
-    widx2vec_dict = {w2i[word]: vec for word, vec in word2vec_dict.items() if word in w2i}
     emb_mat = np.array([widx2vec_dict[wid] if wid in widx2vec_dict
                         else np.random.multivariate_normal(np.zeros(config.word_emb_size), np.eye(config.word_emb_size))
                         for wid in range(word_vocab_size)])
-    config.emb_mat = emb_mat
+config.emb_mat = emb_mat
 
 
     ######################## Saving Everything so far###############################
@@ -247,8 +252,8 @@ else:
 
 
 BiDAF_Model = BiDAFModel(config)
-if os.path.isfile('../models/model_nov17.pkl'):
-    BiDAF_Model.load_state_dict(torch.load('../models/model_nov17.pkl', map_location=lambda storage, loc: storage))
+if os.path.isfile('../models/model_nov19.pkl'):
+    BiDAF_Model.load_state_dict(torch.load('../models/model_nov19.pkl', map_location=lambda storage, loc: storage))
     print('Loading model...')
 if usecuda:
     BiDAF_Model.cuda()
@@ -257,18 +262,18 @@ else:
 
 BiDAFTrainer = Trainer(config,BiDAF_Model)
 
-for epoch in range(0, config.EPOCHS):
+for epoch in range(1, config.EPOCHS):
     ####################################################Train#########################################3
     # writeResult = codecs.open(str(epoch) + 'prediction_results.txt', 'w', encoding='utf-8')
     config.is_train = True
-    # BiDAF_Model.train()
+    BiDAF_Model.train()
     loss = 0
-    # need to implement BATCH
     numOfSamples = 0
     numOfBatch = 0
     start = time.time()
-    # s = ''
-    # dict = {}
+
+    if epoch % 4 == 0:
+        dict = {}
     # for instance in train:
     print("Start Training:" + str(epoch))
     for sid in range(0, len(train), config.BatchSize):
@@ -279,73 +284,81 @@ for epoch in range(0, config.EPOCHS):
             config.MaxSentenceLength = len(instances[len(instances)-1][0])
         config.MaxQuestionLength = max([len(instance[1]) for instance in instances])
         # print(config.MaxSentenceLength)
-        sampleLoss = BiDAFTrainer.step(instances, config, config.is_train)
+
+        if epoch % 4 == 0:
+            sampleLoss,answers = BiDAFTrainer.step(instances, config, config.is_train, isSearching = True)
+            for i in range(len(instances)):
+                text = ''
+                cnt = instances[i][3].split()
+                for j in range(predictions[i][0], predictions[i][1] + 1):
+                    text += cnt[j] + " "
+                dict[instances[i][10]] = text.strip()
+                dict[instances[i][10]] = text
+        else:
+            sampleLoss = BiDAFTrainer.step(instances, config, config.is_train)
+
         sampleLoss = sampleLoss * len(instances)
         loss += sampleLoss
 
-        # for i in range(len(instances)):
-        #     s = s + instances[i][5] + "\t"
-        #     text = ''
-        #     cnt = instances[i][3].split()
-        #     for j in range(predictions[i][0], predictions[i][1] + 1):
-        #         text = text + cnt[j] + " "
-        #     # print (text)
-        #     text = text.strip()
-        #     dict[instances[i][10]] = text
-        #     s = s + text + "\n"
-
         numOfBatch += 1
-        numOfSamples+=len(instances)
+        numOfSamples += len(instances)
         if numOfBatch % 1000 == 0:
             end = time.time()
             print(str(epoch) + " , " + str(numOfSamples) + ' / ' + str(len(train)) + " , Current loss : " + str(
                 loss / numOfSamples)+", run time = " + str(end - start))
             start = time.time()
-            # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
-            #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
-
-    loss /= numOfSamples#len(train)
-    print(str(loss))
-    torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'_nov18.pkl')
-    # with codecs.open(str(epoch) + 'prediction.txt', 'w', encoding='utf-8') as outfile:
-    #     json.dump(dict, outfile)
-    # writeResult.write(s)
-    # writeResult.flush()
-    # writeResult.close()
-    # evaluate.eva(str(epoch) + 'prediction.txt', '../data/train-v1.1.json')
-    #############################DEV##############################3
-    # Start Dev
-    #if epoch % 5 == 0:
-    config.is_train = False
-    # BiDAF_Model.eval()
-    loss = 0
-    numOfSamples = 0
-    numOfBatch = 0
-    start = time.time()
-    print("Start Dev:")
-    for sid in range(0, len(dev), config.DevBatchSize):
-
-        instances = dev[sid:sid + config.DevBatchSize]
-        #print(instances[0][10])
-        if reverse:
-            config.MaxSentenceLength = len(instances[0][0])
-        else:
-            config.MaxSentenceLength = len(instances[len(instances) - 1][0])
-        config.MaxQuestionLength = max([len(instance[1]) for instance in instances])
-        # print(config.MaxSentenceLength)
-        sampleLoss = BiDAFTrainer.step(instances, config, config.is_train) * len(instances)
-        loss += sampleLoss
-        numOfBatch += 1
-        numOfSamples += len(instances)
-        if numOfSamples % 5000 == 0:
-            end = time.time()
-            print("Dev: " + str(numOfSamples) + ' / ' + str(len(dev)) + " , Current loss : " + str(
-                loss / numOfSamples) + ", run time = " + str(end - start))
-            start = time.time()
-            # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
-            #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
 
     loss /= numOfSamples
-    print(str(epoch) + ' Dev Loss: ' + str(loss))
+    print(str(loss))
+    torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'_nov19.pkl')
+    with open('../objects/emb_mat', 'wb') as f:
+        cloudpickle.dump(emb_mat, f)
+
+    with codecs.open(str(epoch) + '_train_result.txt', 'w', encoding='utf-8') as outfile:
+        json.dump(dict, outfile)
+
+    #############################DEV##############################3
+    # Start Dev
+    if epoch % 3 == 0:
+        dict = {}
+        config.is_train = False
+        BiDAF_Model.eval()
+        loss = 0
+        numOfSamples = 0
+        numOfBatch = 0
+        start = time.time()
+        print("Start Dev:")
+        for sid in range(0, len(dev), config.DevBatchSize):
+
+            instances = dev[sid:sid + config.DevBatchSize]
+            #print(instances[0][10])
+            if reverse:
+                config.MaxSentenceLength = len(instances[0][0])
+            else:
+                config.MaxSentenceLength = len(instances[len(instances) - 1][0])
+            config.MaxQuestionLength = max([len(instance[1]) for instance in instances])
+            # print(config.MaxSentenceLength)
+            sampleLoss, answers = BiDAFTrainer.step(instances, config, config.is_train, isSearching = True)
+            for i in range(len(instances)):
+                text = ''
+                cnt = instances[i][3].split()
+                for j in range(predictions[i][0], predictions[i][1] + 1):
+                    text += cnt[j] + " "
+                dict[instances[i][10]] = text.strip()
+                dict[instances[i][10]] = text
+            sampleLoss = sampleLoss * len(instances)
+            loss += sampleLoss
+            numOfBatch += 1
+            numOfSamples += len(instances)
+            if numOfSamples % 5000 == 0:
+                end = time.time()
+                print("Dev: " + str(numOfSamples) + ' / ' + str(len(dev)) + " , Current loss : " + str(
+                    loss / numOfSamples) + ", run time = " + str(end - start))
+                start = time.time()
+
+        with codecs.open(str(epoch) + '_Dev_result.txt', 'w', encoding='utf-8') as outfile:
+            json.dump(dict, outfile)
+        loss /= numOfSamples
+        print(str(epoch) + ' Dev Loss: ' + str(loss))
 
 
