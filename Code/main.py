@@ -80,8 +80,8 @@ def read_train(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            # if lineindex >= 1000:
-            #     break
+            if lineindex >= 100:
+                break
     config.MaxSentenceLength = max_length
     config.MaxQuestionLength = max_Query_Length
 
@@ -129,8 +129,8 @@ def read_dev(configuration):
             if ID == '56cec3e8aab44d1400b88a02':
                 continue
             yield (sent_context, sent_question, sent_answers, context, question, answer, start, end, cx, cq, ID)
-            # if lineindex >= 100:
-            #     break
+            if lineindex >= 50:
+                break
     #config.MaxSentenceLength = max_length
     #config.MaxQuestionLength = max_Query_Length
 
@@ -290,7 +290,7 @@ for epoch in range(1, config.EPOCHS):
             for i in range(len(instances)):
                 text = ''
                 cnt = instances[i][3].split()
-                for j in range(predictions[i][0], predictions[i][1] + 1):
+                for j in range(answers[i][0], answers[i][1] + 1):
                     text += cnt[j] + " "
                 dict[instances[i][10]] = text.strip()
                 dict[instances[i][10]] = text
@@ -313,9 +313,9 @@ for epoch in range(1, config.EPOCHS):
     torch.save(BiDAF_Model.state_dict(), '../models/'+str(epoch)+'_nov19.pkl')
     with open('../objects/emb_mat', 'wb') as f:
         cloudpickle.dump(emb_mat, f)
-
-    with codecs.open(str(epoch) + '_train_result.txt', 'w', encoding='utf-8') as outfile:
-        json.dump(dict, outfile)
+    if epoch % 4 == 0:
+        with codecs.open(str(epoch) + '_train_result.txt', 'w', encoding='utf-8') as outfile:
+            json.dump(dict, outfile)
 
     #############################DEV##############################3
     # Start Dev
@@ -342,7 +342,7 @@ for epoch in range(1, config.EPOCHS):
             for i in range(len(instances)):
                 text = ''
                 cnt = instances[i][3].split()
-                for j in range(predictions[i][0], predictions[i][1] + 1):
+                for j in range(answers[i][0], answers[i][1] + 1):
                     text += cnt[j] + " "
                 dict[instances[i][10]] = text.strip()
                 dict[instances[i][10]] = text
