@@ -330,7 +330,7 @@ with codecs.open('result.txt', 'w', encoding='utf-8') as outfile:
 
 
 print('Dev Loss: ' + str(loss))
-evaluate.eva('result.txt', '../data/train-v1.1.json')
+evaluate.eva('result.txt', '../data/dev-v1.1.json')
 
 
 
