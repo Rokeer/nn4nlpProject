@@ -17,7 +17,7 @@ import codecs
 import pickle
 import evaluate
 import json
-# import cloudpickle
+import cloudpickle
 
 
 if torch.cuda.is_available():
