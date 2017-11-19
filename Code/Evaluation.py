@@ -17,6 +17,7 @@ import codecs
 import pickle
 import json
 # import cloudpickle
+import evaluate
 
 
 if torch.cuda.is_available():
@@ -221,6 +222,12 @@ else:
     else:
         dev.sort(key=lambda x: len(x[0]))
 
+    dev2 = list(read_dev(config.dev_src_file2))
+    if reverse:
+        dev2.sort(key=lambda x: len(x[0]), reverse=reverse)
+    else:
+        dev2.sort(key=lambda x: len(x[0]))
+
     word2vec_dict = get_GLOVE_word2vec(config.glove_path, config.GloveEmbeddingSize)
     widx2vec_dict = {w2i[word]: vec for word, vec in word2vec_dict.items() if word in w2i}
     emb_mat = np.array([widx2vec_dict[wid] if wid in widx2vec_dict
@@ -322,6 +329,71 @@ with codecs.open('result.txt', 'w', encoding='utf-8') as outfile:
 
 
 print('Dev Loss: ' + str(loss))
+evaluate('result.txt', '../data/train-v1.1.json')
+
+
+
+loss = 0
+numOfSamples = 0
+numOfBatch = 0
+start = time.time()
+print("Start Dev2:")
+dict = {}
+s = ""
+writeResult = codecs.open('prediction2.txt','w',encoding='utf-8')
+for sid in range(0, len(dev2), config.DevBatchSize):
+
+    instances = dev2[sid:sid + config.DevBatchSize]
+    # print(instances[0][10])
+    if reverse:
+        config.MaxSentenceLength = len(instances[0][0])
+    else:
+        config.MaxSentenceLength = len(instances[len(instances) - 1][0])
+    config.MaxQuestionLength = max([len(instance[1]) for instance in instances])
+    # print(config.MaxSentenceLength)
+    sampleLoss, predictions = BiDAFTrainer.step(instances, config, config.is_train, isSearching=True)
+    sampleLoss = sampleLoss * len(instances)
+
+    for i in range(len(instances)):
+        # print (instances[i][10])
+        # print (instances[i][3])
+        # print (instances[i][4])
+        # print (instances[i][5])
+        s = s + instances[i][5] + "\t"
+        text = ''
+        cnt = instances[i][3].split()
+        for j in range(predictions[i][0], predictions[i][1]+1):
+            text = text + cnt[j] + " "
+        # print (text)
+        text = text.strip()
+        dict[instances[i][10]] = text
+        s = s + text + "\n"
+        writeResult.write(s)
+        writeResult.flush()
+        s = ""
+        # print (" ")
+
+    loss += sampleLoss
+    numOfBatch += 1
+    numOfSamples += len(instances)
+    if numOfSamples % 5000 == 0:
+        end = time.time()
+        print("Dev2: " + str(numOfSamples) + ' / ' + str(len(dev2)) + " , Current loss : " + str(
+            loss / numOfSamples) + ", run time = " + str(end - start))
+        start = time.time()
+        # print('%s (%d %d%%) %.4f' % (timeSince(start, numOfSamples / (len(train) * 1.0)),
+        #                              numOfSamples, numOfSamples / len(train) * 100, loss / numOfSamples))
+
+loss /= numOfSamples
+writeResult.close()
+with codecs.open('result.txt2', 'w', encoding='utf-8') as outfile:
+    json.dump(dict, outfile)
+
+
+
+print('Dev2 Loss: ' + str(loss))
+evaluate('result2.txt', '../data/dev-v1.1.json')
+
 
 
 

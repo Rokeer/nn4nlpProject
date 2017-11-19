@@ -15,7 +15,8 @@ class Configuration():
         self.max_word_size = 16
         self.BatchSize = 20
         self.train_src_file = "../data/train_lines"
-        self.dev_src_file = "../data/dev_lines"
+        self.dev_src_file = "../data/train_lines"
+        self.dev_src_file2 = "../data/dev_lines"
         self.glove_path = "../data/glove/"
         self.EPOCHS = 50
         self.hidden_size = 200
