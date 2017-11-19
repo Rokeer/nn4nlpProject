@@ -230,9 +230,17 @@ else:
 
     word2vec_dict = get_GLOVE_word2vec(config.glove_path, config.GloveEmbeddingSize)
     widx2vec_dict = {w2i[word]: vec for word, vec in word2vec_dict.items() if word in w2i}
-    emb_mat = np.array([widx2vec_dict[wid] if wid in widx2vec_dict
-                        else np.random.multivariate_normal(np.zeros(config.word_emb_size), np.eye(config.word_emb_size))
-                        for wid in range(word_vocab_size)])
+
+    if os.path.isfile('emb_mat'):
+        with open('emb_mat', 'rb') as f:
+            emb_mat = pickle.load(f)
+    else:
+        emb_mat = np.array([widx2vec_dict[wid] if wid in widx2vec_dict
+                            else np.random.multivariate_normal(np.zeros(config.word_emb_size), np.eye(config.word_emb_size))
+                            for wid in range(word_vocab_size)])
+        with open('emb_mat', 'wb') as f:
+            pickle.dump(emb_mat, f)
+
     config.emb_mat = emb_mat
 
 
