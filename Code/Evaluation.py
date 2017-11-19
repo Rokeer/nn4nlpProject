@@ -314,7 +314,7 @@ for sid in range(0, len(dev), config.DevBatchSize):
     loss += sampleLoss
     numOfBatch += 1
     numOfSamples += len(instances)
-    if numOfSamples % 5 == 0:
+    if numOfSamples % 5000 == 0:
         end = time.time()
         print("Dev: " + str(numOfSamples) + ' / ' + str(len(dev)) + " , Current loss : " + str(
             loss / numOfSamples) + ", run time = " + str(end - start))
