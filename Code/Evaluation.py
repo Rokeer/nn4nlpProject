@@ -329,7 +329,7 @@ with codecs.open('result.txt', 'w', encoding='utf-8') as outfile:
 
 
 print('Dev Loss: ' + str(loss))
-evaluate('result.txt', '../data/train-v1.1.json')
+evaluate.eva('result.txt', '../data/train-v1.1.json')
 
 
 
@@ -392,7 +392,7 @@ with codecs.open('result.txt2', 'w', encoding='utf-8') as outfile:
 
 
 print('Dev2 Loss: ' + str(loss))
-evaluate('result2.txt', '../data/dev-v1.1.json')
+evaluate.eva('result2.txt', '../data/dev-v1.1.json')
 
 
 
